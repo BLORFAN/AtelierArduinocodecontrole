@@ -1,0 +1,2401 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atelier Arduino : blocs et C++</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#E7EDEC; --surface:#FBFCFC; --surface2:#EEF3F2; --ink:#14282D; --muted:#55686C; --line:#C6D2D0;
+  --teal:#00808A; --teal-ink:#006A72; --copper:#B5652A; --dot:#C3CFCD;
+  --err:#B3261E; --err-bg:#FBE9E7; --warn:#7A5200; --warn-bg:#FFF3D6; --ok:#1E7A46; --ok-bg:#E3F4EA; --info-bg:#E2F1F2;
+  --code-bg:#0F2529; --code-ink:#D8E6E4;
+  --c-out:#1D6E8C; --c-time:#A85C0C; --c-ctrl:#6A43A6; --c-serial:#2E7A43; --c-an:#AD376B;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-head:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-code:"JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D191B; --surface:#14252A; --surface2:#1A2F34; --ink:#E2ECEA; --muted:#9AB0AD; --line:#2B4449;
+    --teal:#2AB0B8; --teal-ink:#6FD3D9; --copper:#E3904F; --dot:#25403F;
+    --err:#FF8A80; --err-bg:#3A1F1E; --warn:#FFD27A; --warn-bg:#3A3020; --ok:#7ED9A0; --ok-bg:#183A28; --info-bg:#163639;
+    --code-bg:#091719;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D191B; --surface:#14252A; --surface2:#1A2F34; --ink:#E2ECEA; --muted:#9AB0AD; --line:#2B4449;
+  --teal:#2AB0B8; --teal-ink:#6FD3D9; --copper:#E3904F; --dot:#25403F;
+  --err:#FF8A80; --err-bg:#3A1F1E; --warn:#FFD27A; --warn-bg:#3A3020; --ok:#7ED9A0; --ok-bg:#183A28; --info-bg:#163639;
+  --code-bg:#091719;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body);-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:var(--f-head);line-height:1.15;margin:0}
+code,pre,textarea,select,input{font-family:var(--f-code)}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--copper);outline-offset:2px}
+p{margin:0}
+
+/* Header */
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 28px;max-width:1440px;margin:0 auto;padding:16px 20px 4px}
+.brand h1{font-size:28px;font-weight:800;letter-spacing:-.01em}
+.brand p{color:var(--muted);font-size:15px}
+.missions{display:flex;flex-wrap:wrap;gap:6px;flex:1;justify-content:flex-end}
+.mbtn{position:relative;min-width:40px;height:40px;padding:0 12px;border-radius:20px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700}
+.mbtn:hover{border-color:var(--teal)}
+.mbtn[aria-current="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.mbtn.done::after{content:"✓";position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:9px;background:var(--copper);color:#fff;font-size:11px;line-height:18px;text-align:center}
+.progress{color:var(--muted);font-size:14px;width:100%;text-align:right}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,470px);grid-template-areas:"mission sim" "work sim";grid-template-rows:auto 1fr;gap:18px;max-width:1440px;margin:0 auto;padding:12px 20px 40px}
+.mission{grid-area:mission}
+.work{grid-area:work;min-width:0}
+.sim{grid-area:sim;position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);align-self:start;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:960px){
+  .layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"mission" "sim" "work";grid-template-rows:auto}
+  .sim{position:static;max-height:none}
+  .missions{justify-content:flex-start}
+  .progress{text-align:left}
+}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+
+/* Mission */
+.mission h2{font-size:23px;font-weight:800;margin-bottom:6px}
+.mission .story{max-width:72ch;color:var(--ink)}
+.goal{margin-top:12px;padding:10px 14px;border-left:4px solid var(--copper);background:var(--surface2);border-radius:0 8px 8px 0;max-width:72ch}
+.goal h3{font-size:15px;color:var(--copper);margin-bottom:2px}
+.concept{margin-top:12px;max-width:72ch}
+.concept summary{cursor:pointer;font-weight:700;color:var(--teal-ink)}
+.concept p,.concept table{margin-top:8px}
+.concept code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:.88em}
+.concept table{border-collapse:collapse;font-size:14px;width:100%}
+.concept td{border-top:1px solid var(--line);padding:5px 8px 5px 0;vertical-align:top}
+.concept td:first-child{white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.mactions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:14px}
+.ghost:hover{border-color:var(--teal)}
+.hint{margin-top:10px;padding:10px 14px;background:var(--info-bg);border-radius:8px;max-width:72ch}
+
+/* Workspace */
+.tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;border-bottom:3px solid transparent;padding:8px 14px;font-weight:700;color:var(--muted);font-size:15px;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--teal)}
+.tab:disabled{opacity:.45;cursor:not-allowed}
+.tabnote{margin-left:auto;align-self:center;color:var(--muted);font-size:13px}
+.bwrap{display:grid;grid-template-columns:210px minmax(0,1fr);gap:14px}
+@media (max-width:640px){.bwrap{grid-template-columns:minmax(0,1fr)}}
+.palette h3,.codebox h3,.serial h3{font-size:15px}
+.phelp{font-size:13px;color:var(--muted);margin:2px 0 8px}
+#palette{display:flex;flex-direction:column;gap:6px}
+@media (max-width:640px){#palette{flex-direction:row;flex-wrap:wrap}}
+.pchip{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:0;border-radius:8px;padding:7px 10px;color:#fff;text-align:left;box-shadow:0 2px 0 rgba(0,0,0,.28)}
+.pchip:hover{filter:brightness(1.08)}
+.pchip:active{transform:translateY(1px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+.pname{font-weight:700;font-size:14px}
+.phint{font-size:11.5px;opacity:.85}
+.pnew{position:absolute;top:-7px;right:6px;background:var(--copper);color:#fff;font-size:11px;padding:0 6px;border-radius:8px;font-weight:700}
+.c-out{background:var(--c-out)} .c-time{background:var(--c-time)} .c-ctrl{background:var(--c-ctrl)} .c-serial{background:var(--c-serial)} .c-an{background:var(--c-an)}
+
+.canvas{background-color:var(--surface2);background-image:radial-gradient(var(--dot) 1.3px,transparent 1.6px);background-size:16px 16px;border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.zone{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:12px}
+.zone:last-child{margin-bottom:0}
+.zhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.zsig{font-weight:600;color:var(--teal-ink);font-size:15px}
+.zsub{color:var(--muted);font-size:13px}
+.zend{display:block;color:var(--teal-ink);font-weight:600;font-size:15px}
+.slot{min-height:46px;border:2px dashed transparent;border-radius:8px;padding:3px 6px;margin:4px 0;cursor:pointer}
+.slot:hover{border-color:var(--line)}
+.slot.active{border-color:var(--copper);background:color-mix(in srgb,var(--copper) 7%,transparent)}
+.slot.dragover{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,transparent)}
+.empty{color:var(--muted);font-size:13px;padding:8px 4px}
+.block{color:#fff;border-radius:8px;padding:6px 8px 6px 10px;margin:6px 0;box-shadow:0 2px 0 rgba(0,0,0,.28);cursor:default}
+.bhead{display:flex;align-items:flex-start;gap:8px}
+.bparts{display:flex;flex-wrap:wrap;align-items:center;gap:5px;flex:1;font-weight:700;font-size:14.5px}
+.bparts select,.bparts input{border:0;border-radius:5px;padding:3px 5px;font-size:13.5px;background:rgba(255,255,255,.94);color:#14282D;max-width:100%}
+.bparts input.num{width:84px}
+.bparts input.txt{width:140px}
+.bctl{display:flex;gap:3px;flex-shrink:0}
+.bctl button{width:28px;height:28px;border:0;border-radius:5px;background:rgba(0,0,0,.2);color:#fff;font-size:14px;line-height:1}
+.bctl button:hover{background:rgba(0,0,0,.35)}
+.bcode{display:block;font-size:12px;opacity:.82;margin-top:3px;white-space:pre-wrap;word-break:break-word}
+.binner{background:var(--surface);color:var(--ink);border-radius:6px;margin:5px 0 3px 6px;padding:2px 6px 2px 8px}
+.blab{display:block;font-size:12.5px;color:var(--muted);padding-top:3px}
+.bsep{display:block;font-size:12px;opacity:.85}
+
+.codebox{margin-top:14px}
+.cbhead{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.cbhead p{color:var(--muted);font-size:14px}
+.codeview{margin:0;background:var(--code-bg);color:var(--code-ink);border-radius:10px;padding:12px 0;font-size:13px;line-height:1.6;overflow-x:auto;max-height:360px;counter-reset:ln}
+.codeview .l{display:block;padding:0 14px 0 0;white-space:pre;min-height:1.6em}
+.codeview .l::before{counter-increment:ln;content:counter(ln);display:inline-block;width:3.2em;padding-right:1em;text-align:right;color:#5E7C79}
+.codeview .l.errl,.gutter .errl{background:rgba(255,99,88,.22)}
+.kw{color:#7FD6DB}.fn{color:#F2B36B}.co{color:#D1B3FF}.nu{color:#FFD479}.st{color:#A8DCA9}.cm{color:#7F9A97;font-style:italic}
+
+.editor{display:grid;grid-template-columns:auto minmax(0,1fr);background:var(--code-bg);border-radius:10px;height:440px;overflow:hidden}
+.editor:focus-within{outline:2px solid var(--copper);outline-offset:2px}
+.gutter{padding:12px 0;color:#5E7C79;font:13px/1.6 var(--f-code);text-align:right;user-select:none;overflow:hidden;min-width:3.2em}
+.gutter div{padding:0 10px 0 8px}
+.edarea{position:relative;min-width:0}
+.hl,#cpp{position:absolute;inset:0;margin:0;padding:12px 14px;border:0;font:13px/1.6 var(--f-code);white-space:pre;overflow:auto;tab-size:2;-moz-tab-size:2;letter-spacing:0;word-wrap:normal;overflow-wrap:normal}
+.hl{color:var(--code-ink);pointer-events:none}
+#cpp{background:transparent;color:transparent;caret-color:#fff;resize:none;outline:none}
+#cpp::selection{background:rgba(127,214,219,.3);color:transparent}
+
+/* Simulator */
+.simbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.run{background:var(--teal);color:#fff;border:0;border-radius:9px;padding:10px 18px;font-weight:700;font-size:16px;box-shadow:0 2px 0 var(--teal-ink)}
+.run:hover{filter:brightness(1.07)}
+.stop{background:var(--surface2);color:var(--ink);border:1.5px solid var(--line);border-radius:9px;padding:9px 14px;font-weight:700}
+.stop:disabled{opacity:.5;cursor:not-allowed}
+.speed{margin-left:auto;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.speed select{font-size:14px;padding:4px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.success{margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--ok-bg);border-left:4px solid var(--ok)}
+.success h3{font-size:19px;color:var(--ok);margin-bottom:3px}
+.success button{margin-top:8px;background:var(--ok);color:#fff;border:0;border-radius:8px;padding:7px 14px;font-weight:700}
+.msgs{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.msg{padding:8px 12px;border-radius:8px;font-size:14px;border-left:3px solid}
+.msg.err{background:var(--err-bg);border-color:var(--err)}
+.msg.warn{background:var(--warn-bg);border-color:var(--warn)}
+.msg.info{background:var(--info-bg);border-color:var(--teal)}
+.boardwrap{margin-top:12px;background:var(--surface2);border-radius:12px;padding:8px;color:var(--muted)}
+.boardwrap svg{display:block;width:100%;height:auto}
+#btnG{cursor:pointer;touch-action:none}
+#btnG:focus{outline:none}
+#btnG:focus-visible .btnbody{stroke:var(--copper);stroke-width:3}
+.pot{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:14px}
+.pot input{flex:1;accent-color:var(--teal)}
+.pot output{font-family:var(--f-code);min-width:3.5em;text-align:right}
+.status{margin-top:8px;font-size:14px;color:var(--muted)}
+.status.on{color:var(--ok)}
+.serial{margin-top:14px}
+.shead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.small{font-size:13px;padding:4px 10px}
+#serialOut{margin:0;background:#0B1C1F;color:#CFE3E0;border-radius:10px;padding:10px 12px;height:150px;overflow:auto;font-size:12.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+#serialOut:empty::before{content:"Rien pour l'instant. Utilise Serial.println() pour écrire ici.";color:#6F8C89;font-family:var(--f-body)}
+.foot{max-width:1440px;margin:0 auto;padding:0 20px 30px;color:var(--muted);font-size:13px}
+
+[hidden]{display:none!important}
+.views{display:flex;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.views button{border:0;background:none;color:var(--muted);font-weight:700;padding:7px 16px;border-radius:9px;font-size:15px}
+.views button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.exview{display:grid;grid-template-columns:270px minmax(0,1fr);gap:18px;max-width:1200px;margin:0 auto;padding:12px 20px 40px;align-items:start}
+@media (max-width:860px){.exview{grid-template-columns:minmax(0,1fr)}}
+.exside h2{font-size:21px;font-weight:800}
+.exscore{color:var(--muted);font-size:14px;margin-top:2px}
+.exbar{height:8px;border-radius:4px;background:var(--surface2);margin:8px 0 14px;overflow:hidden}
+.exbar span{display:block;height:100%;background:var(--copper);border-radius:4px;transition:width .3s}
+.exgroup{margin-bottom:12px}
+.exgroup h3{font-size:14px;margin-bottom:6px}
+.exrow{display:flex;flex-wrap:wrap;gap:6px}
+.exbtn{width:36px;height:36px;border-radius:18px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font-weight:700;font-size:14px}
+.exbtn.ok{background:var(--copper);border-color:var(--copper);color:#fff}
+.exbtn.seen{border-style:dashed;border-color:var(--copper)}
+.exbtn[aria-current="true"]{outline:3px solid var(--teal);outline-offset:1px}
+.exmeta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.extype{color:#fff;font-weight:700;font-size:13px;padding:2px 10px;border-radius:10px}
+.t-qcm{background:var(--c-out)}.t-trous{background:var(--c-serial)}.t-bug{background:#B3412E}.t-ordre{background:var(--c-ctrl)}.t-sortie{background:var(--c-time)}
+.exq{font-size:22px;font-weight:800;margin:10px 0 14px;max-width:60ch}
+#exBody .codeview{max-height:none;margin-bottom:12px}
+.blank{background:#173A3F;color:#fff;border:1.5px solid #5FD0D6;border-radius:5px;font:13px var(--f-code);padding:1px 3px}
+.blank.good{border-color:#7ED9A0;background:#18402B}.blank.bad{border-color:#FF8A80;background:#4A1F1E}
+.cline{display:block;width:100%;text-align:left;background:none;border:0;border-left:3px solid transparent;color:inherit;font:13px/1.6 var(--f-code);padding:0 12px 0 0;white-space:pre;cursor:pointer}
+.cline .num{display:inline-block;width:3.2em;padding-right:1em;text-align:right;color:#5E7C79}
+.cline:hover{background:rgba(255,255,255,.06)}
+.cline.sel{background:rgba(227,144,79,.22);border-left-color:#E3904F}
+.cline.good{background:rgba(126,217,160,.22);border-left-color:#7ED9A0}
+.cline.bad{background:rgba(255,99,88,.22);border-left-color:#FF8A80}
+.qopts{display:flex;flex-direction:column;gap:8px;max-width:640px}
+.qopt{text-align:left;background:var(--surface);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--ink);font-size:15.5px}
+.qopt:hover{border-color:var(--teal)}
+.qopt[aria-pressed="true"]{border-color:var(--teal);background:color-mix(in srgb,var(--teal) 10%,transparent)}
+.qopt.good{border-color:var(--ok);background:var(--ok-bg)}.qopt.bad{border-color:var(--err);background:var(--err-bg)}
+.olist{list-style:none;margin:0;padding:6px 0;background:var(--code-bg);border-radius:10px;color:var(--code-ink)}
+.olist li{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 14px;margin:3px 8px;border-radius:6px;background:rgba(255,255,255,.05);font:13px/1.6 var(--f-code)}
+.olist li code{flex:1;white-space:pre;overflow-x:auto}
+.olist button{width:30px;height:28px;border:0;border-radius:5px;background:rgba(255,255,255,.12);color:#fff}
+.olist button:hover{background:rgba(255,255,255,.22)}
+.olist button:disabled{opacity:.3;cursor:default}
+.ghost:disabled{opacity:.45;cursor:default}
+.olist.good li{background:rgba(126,217,160,.18)}
+.ofix{display:block;font:13px/1.6 var(--f-code);color:#7FD6DB;padding:0 14px}
+.anslab{display:block;font-weight:700;margin:4px 0 6px}
+#exAns{width:100%;max-width:480px;font:14px/1.5 var(--f-code);padding:8px 10px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.exactions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.exfb{margin-top:14px;padding:12px 14px;border-radius:10px;border-left:4px solid;max-width:72ch}
+.exfb.ok{background:var(--ok-bg);border-color:var(--ok)}.exfb.err{background:var(--err-bg);border-color:var(--err)}.exfb.info{background:var(--info-bg);border-color:var(--teal)}
+.exnext{display:flex;justify-content:space-between;gap:8px;margin-top:22px;padding-top:14px;border-top:1px solid var(--line)}
+
+.t-orga{background:#00707A}
+.orga{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-bottom:12px}
+.orga .fcwrap{flex:0 1 auto;max-width:100%}
+.orga .codeview{flex:1 1 380px;min-width:0}
+.fcwrap{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px;margin:0 0 12px}
+.orga .fcwrap{margin:0}
+.fcwrap svg{display:block;max-width:100%;height:auto;margin:0 auto}
+.fcwrap figcaption{font-size:13px;color:var(--muted);margin-top:6px}
+.fc .fs{fill:var(--teal)} .fc .ftw{fill:#fff;font:700 12.5px var(--f-body)}
+.fc .fp{fill:var(--surface);stroke:var(--ink);stroke-width:1.5}
+.fc .fi{fill:color-mix(in srgb,var(--copper) 16%,var(--surface));stroke:var(--copper);stroke-width:1.5}
+.fc .fd{fill:color-mix(in srgb,var(--c-ctrl) 14%,var(--surface));stroke:var(--c-ctrl);stroke-width:1.5}
+.fc .fe{fill:none;stroke:var(--muted);stroke-width:1.6}
+.fc .fah{fill:var(--muted)}
+.fc .ft{fill:var(--ink);font:12.5px var(--f-body)}
+.fc .fl{fill:var(--muted);font:700 11.5px var(--f-body)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend svg{width:30px;height:18px;flex-shrink:0}
+.orga .codeview{margin:0}
+.btxt{font:13px var(--f-code);padding:1px 5px;min-width:5ch}
+
+.exview.solo{grid-template-columns:minmax(0,1fr);max-width:960px}
+.field{display:flex;flex-direction:column;gap:4px;margin-top:14px;max-width:420px}
+.field label{font-weight:700}
+.field input{font:16px var(--f-body);padding:9px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.exerr{color:var(--err);margin-top:8px;font-weight:700}
+.exbtn.ans{background:var(--teal);border-color:var(--teal);color:#fff}
+.note{font:800 46px/1 var(--f-head);color:var(--teal-ink);margin:0}
+.rhead{margin:12px 0 10px}
+.tsum{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tchip{display:flex;flex-direction:column;padding:7px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13.5px;background:var(--surface)}
+.tchip.full{border-color:var(--ok)} .tchip.zero{border-color:var(--err)}
+.corr{border:1px solid var(--line);border-left:5px solid var(--ok);border-radius:10px;padding:12px 14px;margin-top:14px;background:var(--surface);break-inside:avoid}
+.corr.ko{border-left-color:var(--err)}
+.corr .ch{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:14px;color:var(--muted)}
+.corr .mk{font-weight:800;color:var(--ok)} .corr.ko .mk{color:var(--err)}
+.corr .q{font-weight:700;margin:8px 0 10px}
+.corr .codeview{max-height:none;margin:0 0 10px}
+.corr .fcwrap{max-width:100%}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.cmp h4{margin:0 0 5px;font-size:13.5px;color:var(--muted)}
+.cmp .codeview{margin:0}
+.cmp .txt{padding:8px 12px;border-radius:8px;background:var(--surface2);white-space:pre-wrap;font:13.5px/1.5 var(--f-code)}
+.cexp{margin-top:10px;font-size:14.5px;max-width:80ch}
+mark.fill{border-radius:4px;padding:0 4px;color:#fff;font-weight:600}
+mark.fill.ok{background:#1E6B40} mark.fill.ko{background:#9B2C24}
+.codeview .l.lok{background:rgba(126,217,160,.28)} .codeview .l.lko{background:rgba(255,99,88,.3)}
+.ttable{width:100%;border-collapse:collapse;font-size:14px;min-width:760px}
+.ttable th,.ttable td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ttable th{color:var(--muted);font-size:13px}
+.ttable details{margin-top:4px;font-size:13px}
+.qgrid{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.qgrid span{padding:1px 6px;border-radius:5px;font-size:12px}
+.qok{background:var(--ok-bg);color:var(--ok)} .qko{background:var(--err-bg);color:var(--err)}
+.csvbox{width:100%;margin-top:8px;font:12.5px var(--f-code);padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.gsheet{margin-top:18px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}
+.gsheet h3{font-size:17px;margin-bottom:4px}
+.gsheet a{color:var(--teal-ink);font-weight:700}
+.gsheet #gsState{margin-top:10px}
+.gsheet #gsState:empty{display:none}
+.gsmore{margin-top:10px;font-size:14px}
+.gsmore summary{cursor:pointer;color:var(--teal-ink);font-weight:700}
+@media print{
+  .top,.foot,#exSide,.exactions,#retakeBox,#sendState{display:none!important}
+  body{background:#fff} .card{border:0;padding:0} .exview{padding:0}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+
+/* Chronomètre du contrôle */
+.exam-timer{display:inline-flex;align-items:center;justify-content:center;min-width:112px;padding:8px 12px;border:2px solid var(--line);border-radius:999px;background:var(--surface);font-weight:900;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.exam-timer.warn{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+.exam-timer.danger{border-color:var(--err);background:var(--err-bg);color:var(--err);animation:timerPulse 1s infinite}
+@keyframes timerPulse{50%{transform:scale(1.04)}}
+</style>
+
+<style id="examPrintProtection">
+@media print {
+  body.exam-security-active * { display:none !important; visibility:hidden !important; }
+  body.exam-security-active::before {
+    content:"IMPRESSION INTERDITE PENDANT LE CONTRÔLE";
+    display:block !important; visibility:visible !important;
+    font:700 24pt sans-serif; text-align:center; margin-top:40mm;
+  }
+}
+body.exam-security-active { -webkit-user-select:none; user-select:none; }
+body.exam-security-active input, body.exam-security-active textarea, body.exam-security-active select, body.exam-security-active button { -webkit-user-select:none; user-select:none; }
+body.exam-security-active #exCard, body.exam-security-active #exCard * { -webkit-user-select:none !important; user-select:none !important; -webkit-touch-callout:none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Atelier Arduino</h1>
+    <p>Programme une carte Arduino Uno avec des blocs, puis en vrai C++.</p>
+  </div>
+  <div class="views" role="group" aria-label="Choisir l'activité">
+    <button type="button" id="viewM" aria-pressed="true">Missions</button>
+    <button type="button" id="viewE" aria-pressed="false">Contrôle noté</button>
+  </div>
+  <nav class="missions" id="strip" aria-label="Missions"></nav>
+  <p class="progress" id="progress"></p>
+</header>
+
+<main class="layout">
+  <section class="mission card" id="mission" aria-live="polite"></section>
+
+  <section class="work card">
+    <div class="tabs" role="tablist" aria-label="Façon de programmer">
+      <button class="tab" id="tabB" role="tab" aria-selected="true" aria-controls="blocksView">Blocs</button>
+      <button class="tab" id="tabC" role="tab" aria-selected="false" aria-controls="cppView">C++</button>
+      <span class="tabnote" id="tabnote"></span>
+    </div>
+
+    <div id="blocksView" role="tabpanel" aria-labelledby="tabB">
+      <div class="bwrap">
+        <aside class="palette">
+          <h3>Blocs</h3>
+          <p class="phelp">Choisis une zone (contour orange), puis clique sur un bloc pour l'y ajouter. Tu peux aussi le glisser.</p>
+          <div id="palette"></div>
+        </aside>
+        <div class="canvas" id="zones"></div>
+      </div>
+      <div class="codebox">
+        <div class="cbhead">
+          <h3>Ton programme en C++</h3>
+          <button type="button" class="ghost small" id="copyBtn">Copier le code</button>
+        </div>
+        <pre class="codeview" id="genCode" aria-label="Code C++ généré par les blocs"></pre>
+      </div>
+    </div>
+
+    <div id="cppView" role="tabpanel" aria-labelledby="tabC" hidden>
+      <div class="cbhead">
+        <p>Écris ton programme comme dans l'IDE Arduino.</p>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" class="ghost small" id="fromBlocks">Reprendre le code des blocs</button>
+          <button type="button" class="ghost small" id="copyCpp">Copier le code</button>
+        </div>
+      </div>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <div class="edarea">
+          <pre class="hl" id="hl" aria-hidden="true"></pre>
+          <textarea id="cpp" spellcheck="false" wrap="off" autocapitalize="off" autocomplete="off" autocorrect="off" aria-label="Code C++"></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="sim card" aria-label="Simulateur de carte">
+    <div class="simbar">
+      <button type="button" class="run" id="runBtn">Téléverser</button>
+      <button type="button" class="stop" id="stopBtn" disabled>Arrêter</button>
+      <label class="speed">Vitesse
+        <select id="speed"><option value="1">×1</option><option value="2">×2</option><option value="5">×5</option></select>
+      </label>
+    </div>
+    <div class="success" id="success" hidden>
+      <h3>Mission réussie !</h3>
+      <p id="winTxt"></p>
+      <button type="button" id="nextBtn">Mission suivante</button>
+    </div>
+    <div class="msgs" id="msgs" aria-live="polite"></div>
+    <div class="boardwrap" id="board"></div>
+    <div class="pot">
+      <label for="potIn">Potentiomètre A0</label>
+      <input type="range" id="potIn" min="0" max="1023" value="512">
+      <output id="potOut" for="potIn">512</output>
+    </div>
+    <p class="status" id="status">Carte à l'arrêt</p>
+    <div class="serial">
+      <div class="shead"><h3>Moniteur série</h3><button type="button" class="ghost small" id="clearSerial">Effacer</button></div>
+      <pre id="serialOut" aria-live="polite"></pre>
+    </div>
+  </aside>
+</main>
+
+<main class="exview" id="exView" hidden>
+  <aside class="card exside" id="exSide"></aside>
+  <section class="card" id="exCard" aria-live="polite"></section>
+</main>
+<p class="foot">Le bouton du simulateur se maintient avec la souris, le doigt, ou la touche Espace quand il a le focus. Ta progression reste enregistrée dans ce navigateur.</p>
+
+<script>
+"use strict";
+// ===================== ENGINE START =====================
+class CodeError extends Error{ constructor(msg,line){ super(msg); this.line=line; } }
+const TYPE_WORDS=new Set(['void','int','long','float','double','bool','boolean','byte','char','String','unsigned','signed','short','const','static','volatile','uint8_t','uint16_t','uint32_t','int8_t','int16_t','int32_t','word','size_t']);
+const ASSIGN_OPS=new Set(['=','+=','-=','*=','/=','%=']);
+const BIN=[['||'],['&&'],['|'],['^'],['&'],['==','!='],['<','>','<=','>='],['<<','>>'],['+','-'],['*','/','%']];
+const truthy=v=>typeof v==='string'?true:!!v;
+function fmt(v){ if(typeof v==='number') return Number.isInteger(v)?String(v):v.toFixed(2); return String(v); }
+function norm(type,v,line){
+  if(Array.isArray(v)) return v;
+  const t=type||'int';
+  if(t==='const') return v;
+  if(t.includes('String')) return typeof v==='string'?v:fmt(v);
+  if(t.includes('char')&&typeof v==='string') return v;
+  if(typeof v==='string') throw new CodeError(`Ligne ${line} : on ne peut pas ranger un texte dans une variable de type ${t}. Utilise le type String.`,line);
+  if(t.includes('float')||t.includes('double')) return Number(v);
+  if(t.includes('bool')) return v?1:0;
+  if(t.includes('void')) return 0;
+  if(t.includes('byte')||t==='uint8_t') return ((Math.trunc(v)%256)+256)%256;
+  return Math.trunc(v);
+}
+
+function tokenize(src,defines={},lineStart=1){
+  const out=[]; let i=0, line=lineStart; const n=src.length;
+  const two=['==','!=','<=','>=','&&','||','++','--','+=','-=','*=','/=','%=','<<','>>','->','::'];
+  while(i<n){
+    const c=src[i];
+    if(c==='\n'){line++;i++;continue;}
+    if(c===' '||c==='\t'||c==='\r'||c==='\u00a0'){i++;continue;}
+    if(c==='/'&&src[i+1]==='/'){while(i<n&&src[i]!=='\n')i++;continue;}
+    if(c==='/'&&src[i+1]==='*'){const st=line;i+=2;while(i<n&&!(src[i]==='*'&&src[i+1]==='/')){if(src[i]==='\n')line++;i++;}
+      if(i>=n) throw new CodeError(`Ligne ${st} : un commentaire /* n'est jamais fermé par */.`,st); i+=2; continue;}
+    if(c==='#'){
+      let j=i; while(j<n&&src[j]!=='\n')j++;
+      const text=src.slice(i,j).trim();
+      const m=text.match(/^#\s*define\s+([A-Za-z_]\w*)\s+(.+)$/);
+      if(m) defines[m[1]]=tokenize(m[2],defines,line);
+      else if(!/^#\s*(include|define|pragma)\b/.test(text)) throw new CodeError(`Ligne ${line} : la directive « ${text} » n'est pas reconnue.`,line);
+      i=j; continue;
+    }
+    if(/[0-9]/.test(c)||(c==='.'&&/[0-9]/.test(src[i+1]||''))){
+      const m=src.slice(i).match(/^(0[xX][0-9a-fA-F]+|0[bB][01]+|\d*\.?\d+(?:[eE][-+]?\d+)?\.?)/);
+      const raw=m[0]; i+=raw.length; while(/[uUlLfF]/.test(src[i]||''))i++;
+      let v,f=false;
+      if(/^0[xX]/.test(raw)) v=parseInt(raw,16);
+      else if(/^0[bB]/.test(raw)) v=parseInt(raw.slice(2),2);
+      else { v=parseFloat(raw); f=/[.eE]/.test(raw); }
+      out.push({t:'num',v,f,line}); continue;
+    }
+    if(c==='“'||c==='”'||c==='«'||c==='»'||c==='‘'||c==='’') throw new CodeError(`Ligne ${line} : le guillemet « ${c} » n'est pas compris par la carte. Utilise des guillemets droits "texte".`,line);
+    if(c==='"'||c==="'"){
+      let j=i+1, s='';
+      while(j<n&&src[j]!==c){
+        if(src[j]==='\n') throw new CodeError(`Ligne ${line} : un texte n'est pas fermé. Ajoute ${c} à la fin.`,line);
+        if(src[j]==='\\'){const e=src[j+1]; s+= e==='n'?'\n':e==='t'?'\t':e; j+=2;} else s+=src[j++];
+      }
+      if(j>=n) throw new CodeError(`Ligne ${line} : un texte n'est pas fermé. Ajoute ${c} à la fin.`,line);
+      out.push({t:'str',v:s,line}); i=j+1; continue;
+    }
+    if(/[A-Za-z_]/.test(c)){
+      let j=i; while(j<n&&/\w/.test(src[j]))j++;
+      const w=src.slice(i,j); i=j;
+      if(defines[w]) for(const t of defines[w]) out.push({...t,line});
+      else out.push({t:'id',v:w,line});
+      continue;
+    }
+    const p2=src.substr(i,2);
+    if(two.includes(p2)){out.push({t:'op',v:p2,line});i+=2;continue;}
+    if('+-*/%<>=!&|^~?:;,.(){}[]'.includes(c)){out.push({t:'op',v:c,line});i++;continue;}
+    throw new CodeError(`Ligne ${line} : le caractère « ${c} » n'est pas attendu ici.`,line);
+  }
+  return out;
+}
+
+class Parser{
+  constructor(t){ this.t=t; this.i=0; this.usedFor=false; }
+  peek(k=0){ return this.t[this.i+k]||{t:'eof',v:'',line:this.t.length?this.t[this.t.length-1].line:1}; }
+  next(){ const tk=this.peek(); this.i++; return tk; }
+  isOp(v,k=0){ const tk=this.peek(k); return tk.t==='op'&&tk.v===v; }
+  isId(v,k=0){ const tk=this.peek(k); return tk.t==='id'&&tk.v===v; }
+  prevLine(){ return (this.t[this.i-1]||this.peek()).line; }
+  expectOp(v,what){
+    if(this.isOp(v)) return this.next();
+    const tk=this.peek();
+    if(v===';'){ const l=this.prevLine(); throw new CodeError(`Ligne ${l} : il manque un point-virgule « ; » à la fin de l'instruction.`,l); }
+    const where=tk.t==='eof'?' avant la fin du programme':` (j'ai trouvé « ${tk.v} »)`;
+    const l=tk.t==='eof'?this.prevLine():tk.line;
+    throw new CodeError(`Ligne ${l} : il manque « ${v} »${what?' '+what:''}${where}.`,l);
+  }
+  expectId(what){
+    const tk=this.peek();
+    if(tk.t==='id'&&!TYPE_WORDS.has(tk.v)) return this.next().v;
+    throw new CodeError(`Ligne ${tk.line} : j'attendais ${what}, j'ai trouvé « ${tk.v||'la fin du programme'} ».`,tk.line);
+  }
+  isDecl(){ let k=0; while(this.peek(k).t==='id'&&TYPE_WORDS.has(this.peek(k).v)) k++; return k>0&&this.peek(k).t==='id'&&!TYPE_WORDS.has(this.peek(k).v); }
+  parseType(){
+    const w=[]; while(this.peek().t==='id'&&TYPE_WORDS.has(this.peek().v)) w.push(this.next().v);
+    while(this.isOp('*')||this.isOp('&')) this.next();
+    return w.filter(x=>!['const','static','volatile'].includes(x)).join(' ')||'int';
+  }
+  parseProgram(){
+    const globals=[], funcs={};
+    while(this.peek().t!=='eof'){
+      if(this.isOp(';')){this.next();continue;}
+      const tk=this.peek();
+      if(!this.isDecl()){
+        if(tk.t==='id'&&TYPE_WORDS.has(tk.v.toLowerCase())&&!TYPE_WORDS.has(tk.v)) throw new CodeError(`Ligne ${tk.line} : attention aux majuscules, écris « ${tk.v.toLowerCase()} ».`,tk.line);
+        if(tk.t==='id'&&(tk.v==='setup'||tk.v==='loop')) throw new CodeError(`Ligne ${tk.line} : écris « void ${tk.v}() ». Une fonction commence par son type.`,tk.line);
+        if(tk.t==='op'&&tk.v==='}') throw new CodeError(`Ligne ${tk.line} : cette accolade « } » ferme quelque chose qui n'a pas été ouvert. Il y en a une de trop.`,tk.line);
+        throw new CodeError(`Ligne ${tk.line} : « ${tk.v} » ne peut pas être écrit ici. En dehors des fonctions, on écrit seulement des variables (int x = 0;) ou des fonctions (void setup() { … }).`,tk.line);
+      }
+      const type=this.parseType(); const line=this.peek().line; const name=this.expectId('un nom');
+      if(this.isOp('(')){
+        const params=this.parseParams();
+        if(!this.isOp('{')) this.expectOp('{','pour ouvrir la fonction '+name);
+        const body=this.parseBlock();
+        if(funcs[name]) throw new CodeError(`Ligne ${line} : la fonction ${name}() existe déjà. Il ne peut y en avoir qu'une.`,line);
+        funcs[name]={name,type,params,body,line};
+      } else globals.push(this.parseDeclRest(type,name,line));
+    }
+    return {globals,funcs};
+  }
+  parseParams(){
+    this.expectOp('('); const ps=[];
+    if(this.isOp(')')){this.next();return ps;}
+    if(this.isId('void')&&this.isOp(')',1)){this.next();this.next();return ps;}
+    for(;;){
+      const type=this.parseType(); const name=this.expectId('un nom de paramètre');
+      if(this.isOp('[')){this.next();this.expectOp(']');}
+      ps.push({type,name});
+      if(this.isOp(',')){this.next();continue;} break;
+    }
+    this.expectOp(')','pour fermer la liste des paramètres'); return ps;
+  }
+  parseDeclRest(type,firstName,line){
+    const vars=[]; let name=firstName;
+    for(;;){
+      const v={name,arr:false,size:null,init:null};
+      if(this.isOp('[')){ this.next(); v.arr=true; if(!this.isOp(']')) v.size=this.parseExpr(); this.expectOp(']'); }
+      if(this.isOp('=')){
+        this.next();
+        if(this.isOp('{')){ this.next(); const items=[]; while(!this.isOp('}')){ items.push(this.parseAssign()); if(this.isOp(',')) this.next(); else break; } this.expectOp('}'); v.init={k:'list',items}; }
+        else v.init=this.parseAssign();
+      }
+      vars.push(v);
+      if(this.isOp(',')){ this.next(); name=this.expectId('un nom de variable'); continue; }
+      break;
+    }
+    this.expectOp(';'); return {k:'decl',type,vars,line};
+  }
+  parseBlock(){
+    const open=this.expectOp('{'); const body=[];
+    while(!this.isOp('}')){
+      if(this.peek().t==='eof') throw new CodeError(`Ligne ${open.line} : l'accolade « { » ouverte ici n'est jamais fermée. Il manque « } ».`,open.line);
+      body.push(this.parseStatement());
+    }
+    this.next(); return {k:'block',body,line:open.line};
+  }
+  parseStatement(){
+    const tk=this.peek();
+    if(this.isOp('{')) return this.parseBlock();
+    if(this.isOp(';')){this.next();return {k:'empty'};}
+    if(tk.t==='id'){
+      switch(tk.v){
+        case 'if':{ this.next(); this.expectOp('(','après if'); const c=this.parseExpr(); this.expectOp(')','pour fermer la condition du if'); const th=this.parseStatement(); let el=null; if(this.isId('else')){this.next(); el=this.parseStatement();} return {k:'if',c,th,el,line:tk.line}; }
+        case 'while':{ this.next(); this.expectOp('(','après while'); const c=this.parseExpr(); this.expectOp(')','pour fermer la condition du while'); const body=this.parseStatement(); return {k:'while',c,body,line:tk.line}; }
+        case 'do':{ this.next(); const body=this.parseStatement(); if(!this.isId('while')) throw new CodeError(`Ligne ${this.peek().line} : après do { … }, il faut écrire while (condition);`,this.peek().line); this.next(); this.expectOp('('); const c=this.parseExpr(); this.expectOp(')'); this.expectOp(';'); return {k:'do',c,body,line:tk.line}; }
+        case 'for':{
+          this.next(); this.usedFor=true; this.expectOp('(','après for'); let init=null;
+          if(this.isOp(';')) this.next();
+          else if(this.isDecl()){ const ty=this.parseType(); const l=this.peek().line; const nm=this.expectId('un nom de variable'); init=this.parseDeclRest(ty,nm,l); }
+          else { init={k:'expr',e:this.parseExpr()}; this.expectOp(';'); }
+          const c=this.isOp(';')?null:this.parseExpr(); this.expectOp(';');
+          const step=this.isOp(')')?null:this.parseExpr(); this.expectOp(')','pour fermer la parenthèse du for');
+          const body=this.parseStatement(); return {k:'for',init,c,step,body,line:tk.line};
+        }
+        case 'return':{ this.next(); const e=this.isOp(';')?null:this.parseExpr(); this.expectOp(';'); return {k:'return',e,line:tk.line}; }
+        case 'break': case 'continue':{ this.next(); this.expectOp(';'); return {k:tk.v,line:tk.line}; }
+        case 'else': throw new CodeError(`Ligne ${tk.line} : ce « else » n'a pas de « if » juste avant. Vérifie tes accolades.`,tk.line);
+        case 'switch': case 'goto': case 'class': case 'struct': throw new CodeError(`Ligne ${tk.line} : « ${tk.v} » n'est pas encore géré par ce simulateur.`,tk.line);
+      }
+      if(this.isDecl()){
+        const ty=this.parseType(); const l=this.peek().line; const nm=this.expectId('un nom de variable');
+        if(this.isOp('(')) throw new CodeError(`Ligne ${l} : on ne peut pas créer une fonction à l'intérieur d'une autre. Il manque sûrement une accolade « } » plus haut.`,l);
+        return this.parseDeclRest(ty,nm,l);
+      }
+      if(TYPE_WORDS.has(tk.v.toLowerCase())&&!TYPE_WORDS.has(tk.v)&&this.peek(1).t==='id') throw new CodeError(`Ligne ${tk.line} : attention aux majuscules, écris « ${tk.v.toLowerCase()} ».`,tk.line);
+    }
+    const e=this.parseExpr(); this.expectOp(';'); return {k:'expr',e,line:tk.line};
+  }
+  parseExpr(){ return this.parseAssign(); }
+  parseAssign(){
+    const left=this.parseTernary(); const tk=this.peek();
+    if(tk.t==='op'&&ASSIGN_OPS.has(tk.v)){
+      this.next();
+      if(left.k!=='id'&&left.k!=='index') throw new CodeError(`Ligne ${tk.line} : à gauche de « ${tk.v} », il faut une variable.`,tk.line);
+      const value=this.parseAssign(); return {k:'assign',op:tk.v,target:left,value,line:tk.line};
+    }
+    return left;
+  }
+  parseTernary(){
+    const c=this.parseBin(0);
+    if(this.isOp('?')){ const line=this.next().line; const a=this.parseAssign(); this.expectOp(':'); const b=this.parseAssign(); return {k:'cond',c,a,b,line}; }
+    return c;
+  }
+  parseBin(l){
+    if(l>=BIN.length) return this.parseUnary();
+    let left=this.parseBin(l+1);
+    for(;;){ const tk=this.peek(); if(tk.t==='op'&&BIN[l].includes(tk.v)){ this.next(); const right=this.parseBin(l+1); left={k:'bin',op:tk.v,left,right,line:tk.line}; } else break; }
+    return left;
+  }
+  parseUnary(){
+    const tk=this.peek();
+    if(tk.t==='op'){
+      if(['!','-','+','~'].includes(tk.v)){ this.next(); return {k:'un',op:tk.v,arg:this.parseUnary(),line:tk.line}; }
+      if(tk.v==='++'||tk.v==='--'){ this.next(); const target=this.parseUnary(); if(target.k!=='id'&&target.k!=='index') throw new CodeError(`Ligne ${tk.line} : « ${tk.v} » s'utilise sur une variable.`,tk.line); return {k:'preinc',op:tk.v,target,line:tk.line}; }
+      if(tk.v==='('){
+        let k=1; const tw=[];
+        while(this.peek(k).t==='id'&&TYPE_WORDS.has(this.peek(k).v)){ tw.push(this.peek(k).v); k++; }
+        if(tw.length&&this.isOp(')',k)){ this.i+=k+1; return {k:'cast',type:tw.join(' '),arg:this.parseUnary(),line:tk.line}; }
+      }
+    }
+    return this.parsePostfix();
+  }
+  parsePostfix(){
+    let e=this.parsePrimary();
+    for(;;){
+      const tk=this.peek(); if(tk.t!=='op') break;
+      if(tk.v==='('){
+        this.next(); const args=[];
+        if(!this.isOp(')')){ for(;;){ args.push(this.parseAssign()); if(this.isOp(',')){this.next();continue;} break; } }
+        this.expectOp(')','pour fermer les parenthèses'); e={k:'call',callee:e,args,line:e.line||tk.line};
+      } else if(tk.v==='['){ this.next(); const idx=this.parseExpr(); this.expectOp(']'); e={k:'index',obj:e,idx,line:tk.line}; }
+      else if(tk.v==='.'){ this.next(); const nm=this.peek(); if(nm.t!=='id') throw new CodeError(`Ligne ${tk.line} : après un point, il faut un nom (par exemple Serial.println).`,tk.line); this.next(); e={k:'member',obj:e,name:nm.v,line:nm.line}; }
+      else if(tk.v==='++'||tk.v==='--'){ this.next(); if(e.k!=='id'&&e.k!=='index') throw new CodeError(`Ligne ${tk.line} : « ${tk.v} » s'utilise sur une variable.`,tk.line); e={k:'postinc',op:tk.v,target:e,line:tk.line}; }
+      else break;
+    }
+    return e;
+  }
+  parsePrimary(){
+    const tk=this.next();
+    if(tk.t==='num') return {k:'num',v:tk.v,f:tk.f,line:tk.line};
+    if(tk.t==='str') return {k:'str',v:tk.v,line:tk.line};
+    if(tk.t==='id'){
+      if(tk.v==='true') return {k:'num',v:1,line:tk.line};
+      if(tk.v==='false') return {k:'num',v:0,line:tk.line};
+      return {k:'id',name:tk.v,line:tk.line};
+    }
+    if(tk.t==='op'&&tk.v==='('){ const e=this.parseExpr(); this.expectOp(')','pour fermer la parenthèse'); return e; }
+    if(tk.t==='eof') throw new CodeError(`Ligne ${tk.line} : le programme s'arrête au milieu d'une instruction.`,tk.line);
+    if(tk.t==='op'&&tk.v===';') throw new CodeError(`Ligne ${tk.line} : il manque une valeur avant « ; ».`,tk.line);
+    throw new CodeError(`Ligne ${tk.line} : « ${tk.v} » n'est pas attendu ici.`,tk.line);
+  }
+}
+
+const BUILTINS={
+  pinMode:{min:2,max:2,sig:'2 valeurs : la broche et le mode',f:(hw,a,l)=>hw.pinMode(a[0],a[1],l)},
+  digitalWrite:{min:2,max:2,sig:'2 valeurs : la broche, puis HIGH ou LOW',f:(hw,a,l)=>hw.digitalWrite(a[0],a[1],l)},
+  digitalRead:{min:1,max:1,sig:'1 valeur : la broche',f:(hw,a,l)=>hw.digitalRead(a[0],l)},
+  analogRead:{min:1,max:1,sig:'1 valeur : la broche (A0 à A5)',f:(hw,a,l)=>hw.analogRead(a[0],l)},
+  analogWrite:{min:2,max:2,sig:'2 valeurs : la broche, puis un nombre de 0 à 255',f:(hw,a,l)=>hw.analogWrite(a[0],a[1],l)},
+  millis:{min:0,max:0,sig:'aucune valeur',f:hw=>Math.floor(hw.time)},
+  micros:{min:0,max:0,sig:'aucune valeur',f:hw=>Math.floor(hw.time*1000)},
+  map:{min:5,max:5,sig:'5 valeurs : valeur, min, max, nouveau min, nouveau max',f:(hw,a)=>{const[x,i1,i2,o1,o2]=a; if(i2===i1) return o1; return Math.trunc((x-i1)*(o2-o1)/(i2-i1)+o1);}},
+  constrain:{min:3,max:3,sig:'3 valeurs : valeur, min, max',f:(hw,a)=>Math.min(Math.max(a[0],a[1]),a[2])},
+  min:{min:2,max:2,sig:'2 valeurs',f:(hw,a)=>Math.min(a[0],a[1])},
+  max:{min:2,max:2,sig:'2 valeurs',f:(hw,a)=>Math.max(a[0],a[1])},
+  abs:{min:1,max:1,sig:'1 valeur',f:(hw,a)=>Math.abs(a[0])},
+  sq:{min:1,max:1,sig:'1 valeur',f:(hw,a)=>a[0]*a[0]},
+  sqrt:{min:1,max:1,sig:'1 valeur',f:(hw,a)=>Math.sqrt(a[0])},
+  pow:{min:2,max:2,sig:'2 valeurs',f:(hw,a)=>Math.pow(a[0],a[1])},
+  random:{min:1,max:2,sig:'1 ou 2 valeurs',f:(hw,a)=>{const lo=a.length===2?a[0]:0, hi=a.length===2?a[1]:a[0]; return lo+Math.floor(Math.random()*(hi-lo));}},
+  randomSeed:{min:1,max:1,sig:'1 valeur',f:()=>0},
+  String:{min:0,max:1,sig:'0 ou 1 valeur',f:(hw,a)=>a.length?fmt(a[0]):''},
+};
+const UNSUPPORTED=['tone','noTone','pulseIn','attachInterrupt','detachInterrupt','shiftOut','shiftIn','analogReference'];
+
+class Env{ constructor(p){this.p=p;this.v=new Map();} get(n){ let e=this; while(e){ if(e.v.has(n)) return e.v.get(n); e=e.p; } return null; } }
+
+class Machine{
+  constructor(ast,hw){
+    this.ast=ast; this.hw=hw; this.genv=new Env(null); this.steps=0; this.depth=0;
+    const C={HIGH:1,LOW:0,OUTPUT:1,INPUT:0,INPUT_PULLUP:2,LED_BUILTIN:13,A0:14,A1:15,A2:16,A3:17,A4:18,A5:19,DEC:10,HEX:16,BIN:2,OCT:8};
+    for(const k in C) this.genv.v.set(k,{value:C[k],type:'const',ro:true});
+  }
+  unknown(name,line){
+    const known=[...Object.keys(BUILTINS),...Object.keys(this.ast.funcs),'Serial','delay',...this.genv.v.keys()];
+    const m=known.find(k=>k.toLowerCase()===name.toLowerCase());
+    if(m) return new CodeError(`Ligne ${line} : « ${name} » n'existe pas. Attention aux majuscules : il faut écrire « ${m} ».`,line);
+    if(name==='i') return new CodeError(`Ligne ${line} : « i » n'existe pas ici. Le compteur i n'existe qu'à l'intérieur d'une boucle « pour » (for).`,line);
+    return new CodeError(`Ligne ${line} : « ${name} » n'est pas déclaré. Pour créer une variable, écris par exemple « int ${name} = 0; ».`,line);
+  }
+  isFloat(n,env){
+    if(n.k==='num') return !!n.f;
+    if(n.k==='cast') return /float|double/.test(n.type);
+    if(n.k==='id'){ const r=env.get(n.name); return !!(r&&/float|double/.test(r.type)); }
+    if(n.k==='bin') return this.isFloat(n.left,env)||this.isFloat(n.right,env);
+    return false;
+  }
+  *tick(){ this.steps++; this.hw.time+=0.004; if(this.steps%300===0) yield {tick:true}; }
+  bin(op,a,b,line){
+    if(Array.isArray(a)||Array.isArray(b)) throw new CodeError(`Ligne ${line} : on ne peut pas calculer avec un tableau entier. Utilise une case : tableau[0].`,line);
+    if(op==='+'&&(typeof a==='string'||typeof b==='string')) return fmt(a)+fmt(b);
+    if(typeof a==='string'||typeof b==='string'){
+      if(op==='=='||op==='!='){ const r=fmt(a)===fmt(b); return (op==='=='?r:!r)?1:0; }
+      throw new CodeError(`Ligne ${line} : on ne peut pas utiliser « ${op} » avec du texte.`,line);
+    }
+    switch(op){
+      case '+':return a+b; case '-':return a-b; case '*':return a*b;
+      case '/': if(b===0) throw new CodeError(`Ligne ${line} : division par zéro ! La carte ne sait pas diviser par 0.`,line); return (Number.isInteger(a)&&Number.isInteger(b))?Math.trunc(a/b):a/b;
+      case '%': if(Math.trunc(b)===0) throw new CodeError(`Ligne ${line} : modulo par zéro !`,line); return Math.trunc(a)%Math.trunc(b);
+      case '==':return a===b?1:0; case '!=':return a!==b?1:0;
+      case '<':return a<b?1:0; case '>':return a>b?1:0; case '<=':return a<=b?1:0; case '>=':return a>=b?1:0;
+      case '&':return a&b; case '|':return a|b; case '^':return a^b; case '<<':return a<<b; case '>>':return a>>b;
+    }
+    throw new CodeError(`Ligne ${line} : opération « ${op} » inconnue.`,line);
+  }
+  *ev(n,env){
+    switch(n.k){
+      case 'num': case 'str': return n.v;
+      case 'id':{
+        const r=env.get(n.name);
+        if(!r){
+          if(BUILTINS[n.name]||this.ast.funcs[n.name]||n.name==='delay') throw new CodeError(`Ligne ${n.line} : « ${n.name} » est une fonction. Ajoute des parenthèses : ${n.name}(…).`,n.line);
+          throw this.unknown(n.name,n.line);
+        }
+        return r.value;
+      }
+      case 'bin':{
+        if(n.op==='&&'){ const a=yield* this.ev(n.left,env); if(!truthy(a)) return 0; const b=yield* this.ev(n.right,env); return truthy(b)?1:0; }
+        if(n.op==='||'){ const a=yield* this.ev(n.left,env); if(truthy(a)) return 1; const b=yield* this.ev(n.right,env); return truthy(b)?1:0; }
+        const a=yield* this.ev(n.left,env); const b=yield* this.ev(n.right,env);
+        if(n.op==='/'&&typeof a==='number'&&typeof b==='number'&&b!==0&&(this.isFloat(n.left,env)||this.isFloat(n.right,env))) return a/b;
+        return this.bin(n.op,a,b,n.line);
+      }
+      case 'un':{
+        const a=yield* this.ev(n.arg,env);
+        if(n.op==='!') return truthy(a)?0:1;
+        if(typeof a!=='number') throw new CodeError(`Ligne ${n.line} : « ${n.op} » s'utilise avec un nombre.`,n.line);
+        return n.op==='-'?-a:n.op==='~'?~a:+a;
+      }
+      case 'cond':{ const c=yield* this.ev(n.c,env); if(truthy(c)) return yield* this.ev(n.a,env); return yield* this.ev(n.b,env); }
+      case 'assign':{
+        let v=yield* this.ev(n.value,env);
+        if(n.op!=='='){ const cur=yield* this.ev(n.target,env); v=this.bin(n.op.slice(0,-1),cur,v,n.line); }
+        return yield* this.store(n.target,v,env,n.line);
+      }
+      case 'preinc': case 'postinc':{
+        const cur=yield* this.ev(n.target,env);
+        if(typeof cur!=='number') throw new CodeError(`Ligne ${n.line} : « ${n.op} » s'utilise avec un nombre.`,n.line);
+        const nv=n.op==='++'?cur+1:cur-1; const stored=yield* this.store(n.target,nv,env,n.line);
+        return n.k==='preinc'?stored:cur;
+      }
+      case 'cast':{ const v=yield* this.ev(n.arg,env); return norm(n.type,v,n.line); }
+      case 'index':{
+        const a=yield* this.ev(n.obj,env); const i=yield* this.ev(n.idx,env);
+        if(typeof a==='string'){ return a[i]??''; }
+        if(!Array.isArray(a)) throw new CodeError(`Ligne ${n.line} : on ne peut utiliser [ ] que sur un tableau.`,n.line);
+        if(!Number.isInteger(i)||i<0||i>=a.length) throw new CodeError(`Ligne ${n.line} : la case ${i} n'existe pas. Ce tableau va de la case 0 à la case ${a.length-1}.`,n.line);
+        return a[i];
+      }
+      case 'call': return yield* this.call(n,env);
+      case 'member': throw new CodeError(`Ligne ${n.line} : « ${n.name} » doit être suivi de parenthèses.`,n.line);
+      case 'list': throw new CodeError(`Ligne ${n.line} : les accolades { } servent seulement à remplir un tableau.`,n.line);
+    }
+    throw new CodeError(`Ligne ${n.line||'?'} : expression non reconnue.`,n.line);
+  }
+  *store(t,v,env,line){
+    if(t.k==='id'){
+      const r=env.get(t.name);
+      if(!r) throw this.unknown(t.name,line);
+      if(r.ro) throw new CodeError(`Ligne ${line} : « ${t.name} » est une constante, on ne peut pas la changer.`,line);
+      if(r.arr) throw new CodeError(`Ligne ${line} : on ne peut pas remplacer un tableau entier. Change une case : ${t.name}[0] = …`,line);
+      r.value=norm(r.type,v,line); return r.value;
+    }
+    if(t.k==='index'){
+      const a=yield* this.ev(t.obj,env); const i=yield* this.ev(t.idx,env);
+      if(!Array.isArray(a)) throw new CodeError(`Ligne ${line} : on ne peut utiliser [ ] que sur un tableau.`,line);
+      if(!Number.isInteger(i)||i<0||i>=a.length) throw new CodeError(`Ligne ${line} : la case ${i} n'existe pas. Ce tableau va de la case 0 à la case ${a.length-1}.`,line);
+      const r=t.obj.k==='id'?env.get(t.obj.name):null;
+      a[i]=norm(r?r.type:'int',v,line); return a[i];
+    }
+    throw new CodeError(`Ligne ${line} : on ne peut donner une valeur qu'à une variable.`,line);
+  }
+  *call(n,env){
+    const args=[]; for(const a of n.args) args.push(yield* this.ev(a,env));
+    if(n.callee.k==='member'){
+      if(n.callee.obj.k!=='id'||n.callee.obj.name!=='Serial'){
+        const nm=n.callee.obj.k==='id'?n.callee.obj.name:'';
+        if(nm.toLowerCase()==='serial') throw new CodeError(`Ligne ${n.line} : attention aux majuscules, écris « Serial ».`,n.line);
+        throw new CodeError(`Ligne ${n.line} : seul Serial s'utilise avec un point dans ce simulateur (Serial.println…).`,n.line);
+      }
+      return this.hw.serialCall(n.callee.name,args,n.line);
+    }
+    if(n.callee.k!=='id') throw new CodeError(`Ligne ${n.line} : on ne peut appeler que des fonctions.`,n.line);
+    const name=n.callee.name;
+    if(this.ast.funcs[name]) return yield* this.callUser(name,args,n.line);
+    if(name==='delay'||name==='delayMicroseconds'){
+      if(args.length!==1) throw new CodeError(`Ligne ${n.line} : ${name} attend 1 valeur : la durée.`,n.line);
+      if(typeof args[0]!=='number'||args[0]<0) throw new CodeError(`Ligne ${n.line} : ${name} attend un nombre positif.`,n.line);
+      yield {delay: name==='delay'?args[0]:args[0]/1000}; return 0;
+    }
+    const b=BUILTINS[name];
+    if(!b){
+      if(UNSUPPORTED.includes(name)) throw new CodeError(`Ligne ${n.line} : « ${name} » existe sur Arduino, mais pas encore dans ce simulateur.`,n.line);
+      if(env.get(name)) throw new CodeError(`Ligne ${n.line} : « ${name} » est une variable, pas une fonction.`,n.line);
+      throw this.unknown(name,n.line);
+    }
+    if(args.length<b.min||args.length>b.max) throw new CodeError(`Ligne ${n.line} : ${name} attend ${b.sig}. Tu en as donné ${args.length}.`,n.line);
+    for(const a of args) if(Array.isArray(a)) throw new CodeError(`Ligne ${n.line} : ${name} ne prend pas un tableau entier. Donne une case : tableau[0].`,n.line);
+    return b.f(this.hw,args,n.line);
+  }
+  *callUser(name,args,line){
+    const f=this.ast.funcs[name];
+    if(args.length!==f.params.length) throw new CodeError(`Ligne ${line} : ${name}() attend ${f.params.length} valeur(s), tu en as donné ${args.length}.`,line);
+    if(++this.depth>150) throw new CodeError(`Ligne ${line} : trop d'appels imbriqués. La fonction ${name}() s'appelle-t-elle elle-même sans fin ?`,line);
+    const env=new Env(this.genv);
+    f.params.forEach((p,i)=>env.v.set(p.name,{value:norm(p.type,args[i],line),type:p.type,arr:Array.isArray(args[i])}));
+    const r=yield* this.ex(f.body,env);
+    this.depth--;
+    if(r&&(r.sig==='break'||r.sig==='continue')) throw new CodeError(`« ${r.sig} » doit se trouver dans une boucle (for, while).`,line);
+    if(r&&r.sig==='return'&&r.value!==undefined) return f.type==='void'?0:norm(f.type,r.value,line);
+    return 0;
+  }
+  *ex(n,env){
+    switch(n.k){
+      case 'block':{ const e=new Env(env); for(const s of n.body){ const r=yield* this.ex(s,e); if(r) return r; } return null; }
+      case 'empty': return null;
+      case 'expr': yield* this.ev(n.e,env); yield* this.tick(); return null;
+      case 'decl':{
+        for(const d of n.vars){
+          if(env.v.has(d.name)) throw new CodeError(`Ligne ${n.line} : la variable « ${d.name} » existe déjà ici.`,n.line);
+          let value;
+          if(d.arr){
+            const items=[];
+            if(d.init){
+              if(d.init.k!=='list') throw new CodeError(`Ligne ${n.line} : un tableau se remplit avec des accolades, par exemple { 8, 9, 10 }.`,n.line);
+              for(const it of d.init.items){ const v=yield* this.ev(it,env); items.push(norm(n.type,v,n.line)); }
+            }
+            let size=items.length;
+            if(d.size){ size=yield* this.ev(d.size,env); if(!Number.isInteger(size)||size<=0||size>2000) throw new CodeError(`Ligne ${n.line} : la taille du tableau doit être un nombre entier positif.`,n.line); if(items.length>size) throw new CodeError(`Ligne ${n.line} : trop de valeurs pour un tableau de ${size} cases.`,n.line); }
+            if(!size) throw new CodeError(`Ligne ${n.line} : indique la taille du tableau ou remplis-le : int t[3]; ou int t[] = {1, 2, 3};`,n.line);
+            while(items.length<size) items.push(n.type.includes('String')?'':0);
+            value=items;
+          } else {
+            if(d.init&&d.init.k==='list') throw new CodeError(`Ligne ${n.line} : les accolades { } servent seulement à remplir un tableau. Ajoute [ ] après le nom.`,n.line);
+            if(d.init){ const v=yield* this.ev(d.init,env); value=norm(n.type,v,n.line); }
+            else value=n.type.includes('String')?'':0;
+          }
+          env.v.set(d.name,{value,type:n.type,arr:d.arr});
+        }
+        return null;
+      }
+      case 'if':{ const c=yield* this.ev(n.c,env); if(truthy(c)) return yield* this.ex(n.th,env); if(n.el) return yield* this.ex(n.el,env); return null; }
+      case 'while':{
+        for(;;){ const c=yield* this.ev(n.c,env); if(!truthy(c)) break; const r=yield* this.ex(n.body,env); if(r){ if(r.sig==='break') break; if(r.sig==='return') return r; } yield* this.tick(); }
+        return null;
+      }
+      case 'do':{
+        for(;;){ const r=yield* this.ex(n.body,env); if(r){ if(r.sig==='break') break; if(r.sig==='return') return r; } yield* this.tick(); const c=yield* this.ev(n.c,env); if(!truthy(c)) break; }
+        return null;
+      }
+      case 'for':{
+        const e=new Env(env);
+        if(n.init){ if(n.init.k==='decl') yield* this.ex(n.init,e); else yield* this.ev(n.init.e,e); }
+        for(;;){
+          if(n.c){ const c=yield* this.ev(n.c,e); if(!truthy(c)) break; }
+          const r=yield* this.ex(n.body,e);
+          if(r){ if(r.sig==='break') break; if(r.sig==='return') return r; }
+          if(n.step) yield* this.ev(n.step,e);
+          yield* this.tick();
+        }
+        return null;
+      }
+      case 'return':{ let value; if(n.e) value=yield* this.ev(n.e,env); return {sig:'return',value}; }
+      case 'break': return {sig:'break'};
+      case 'continue': return {sig:'continue'};
+    }
+    throw new CodeError(`Instruction non reconnue.`,n.line);
+  }
+  *main(){
+    const f=this.ast.funcs;
+    if(!f.setup) throw new CodeError('Il manque la fonction « void setup() { … } ». Tout programme Arduino en a besoin, même vide.',1);
+    if(!f.loop) throw new CodeError('Il manque la fonction « void loop() { … } ». Tout programme Arduino en a besoin, même vide.',1);
+    for(const g of this.ast.globals) yield* this.ex(g,this.genv);
+    yield* this.callUser('setup',[],f.setup.line);
+    for(;;){ yield* this.callUser('loop',[],f.loop.line); this.hw.loops++; this.hw.time+=0.01; yield {tick:true,loopEnd:true}; }
+  }
+}
+
+const PWM_PINS=[3,5,6,9,10,11];
+class Hardware{
+  constructor(io){ this.io=io; this.reset(); }
+  reset(){ this.mode={}; this.val={}; this.pwm={}; this.time=0; this.loops=0; this.log=[]; this.snaps=[]; this.lines=['']; this.serialOn=false; this.warned=new Set(); this.presses=0; }
+  addLog(e){ this.log.push(e); if(this.log.length>4000) this.log.splice(0,1000); }
+  checkPin(p,l){ if(typeof p!=='number'||!Number.isInteger(p)||p<0||p>19) throw new CodeError(`Ligne ${l} : la broche ${p} n'existe pas sur l'Arduino Uno (0 à 13, puis A0 à A5).`,l); }
+  pinMode(p,m,l){ this.checkPin(p,l); if(![0,1,2].includes(m)) throw new CodeError(`Ligne ${l} : le mode doit être OUTPUT, INPUT ou INPUT_PULLUP.`,l); this.mode[p]=m; if(m!==1){ this.val[p]=0; delete this.pwm[p]; } this.io.render(); return 0; }
+  digitalWrite(p,v,l){
+    this.checkPin(p,l);
+    if(typeof v!=='number') throw new CodeError(`Ligne ${l} : digitalWrite attend HIGH ou LOW.`,l);
+    const on=v?1:0;
+    if(this.mode[p]!==1){ this.warn('w'+p,`Ligne ${l} : la broche ${p} n'est pas réglée en sortie. Ajoute pinMode(${p}, OUTPUT); dans setup(), sinon la LED reste éteinte.`); return 0; }
+    this.val[p]=on; delete this.pwm[p];
+    this.addLog({t:this.time,pin:p,v:on,kind:'d',btn:this.io.btn}); this.io.render(); return 0;
+  }
+  digitalRead(p,l){
+    this.checkPin(p,l);
+    if(p===2){ const pressed=this.io.btn; return this.mode[2]===2?(pressed?0:1):(pressed?1:0); }
+    if(this.mode[p]===1) return this.val[p]||0;
+    return 0;
+  }
+  analogRead(p,l){
+    if(typeof p==='number'&&p>=0&&p<=5) p+=14;
+    if(typeof p!=='number'||p<14||p>19) throw new CodeError(`Ligne ${l} : analogRead fonctionne seulement avec les broches A0 à A5.`,l);
+    if(p===14) return Math.round(this.io.pot);
+    return Math.floor(Math.random()*12);
+  }
+  analogWrite(p,v,l){
+    this.checkPin(p,l);
+    if(typeof v!=='number') throw new CodeError(`Ligne ${l} : analogWrite attend un nombre de 0 à 255.`,l);
+    let val=Math.max(0,Math.min(255,Math.trunc(v)));
+    if(v>255||v<0) this.warn('pwmr',`Ligne ${l} : analogWrite accepte de 0 à 255. La valeur ${Math.trunc(v)} a été bloquée à ${val}.`);
+    if(!PWM_PINS.includes(p)){ this.warn('pwm'+p,`Ligne ${l} : la broche ${p} ne sait pas faire varier la lumière (pas de ~). Utilise 3, 5, 6, 9, 10 ou 11.`); val=val>=128?255:0; }
+    this.mode[p]=1; this.pwm[p]=val; this.val[p]=val>0?1:0;
+    this.addLog({t:this.time,pin:p,v:val,kind:'a',pot:Math.round(this.io.pot)}); this.io.render(); return 0;
+  }
+  serialCall(name,a,l){
+    switch(name){
+      case 'begin': this.serialOn=true; return 0;
+      case 'print': case 'println': case 'write':{
+        if(!this.serialOn){ this.warn('ser',`Ligne ${l} : ajoute Serial.begin(9600); dans setup() pour ouvrir le moniteur série.`); return 0; }
+        let s='';
+        if(a.length){
+          const v=a[0];
+          if(name==='write'&&typeof v==='number') s=String.fromCharCode(v);
+          else if(typeof v==='number'&&a.length===2){ s=Number.isInteger(v)&&[2,8,16].includes(a[1])?Math.trunc(v).toString(a[1]).toUpperCase():(Number.isInteger(v)&&a[1]===10?String(v):v.toFixed(a[1])); }
+          else s=fmt(v);
+        }
+        this.out(s+(name==='println'?'\n':'')); return s.length;
+      }
+      case 'available': return 0;
+      case 'read': return -1;
+      case 'end': this.serialOn=false; return 0;
+      case 'flush': return 0;
+    }
+    if(name.toLowerCase()==='println') throw new CodeError(`Ligne ${l} : attention aux majuscules, écris « Serial.println ».`,l);
+    throw new CodeError(`Ligne ${l} : Serial.${name} n'existe pas. Essaie Serial.println.`,l);
+  }
+  out(s){ const parts=s.split('\n'); this.lines[this.lines.length-1]+=parts[0]; for(let i=1;i<parts.length;i++) this.lines.push(parts[i]); if(this.lines.length>300) this.lines.splice(0,this.lines.length-300); this.io.serialChanged(); }
+  warn(key,msg){ if(this.warned.has(key)) return; this.warned.add(key); this.io.message('warn',msg); }
+  isLit(p){ return this.mode[p]===1&&this.val[p]===1; }
+  snap(){ const on=[]; for(let p=2;p<=13;p++) if(this.isLit(p)) on.push(p); this.snaps.push({t:this.time,on}); if(this.snaps.length>400) this.snaps.shift(); }
+  brightness(p){ if(this.mode[p]!==1) return 0; if(this.pwm[p]!==undefined) return this.pwm[p]===0?0:Math.pow(this.pwm[p]/255,0.6); return this.val[p]?1:0; }
+}
+// ===================== ENGINE END =====================
+
+// ---------- Blocs ----------
+const PINS=['2','3','4','5','6','7','8','9','10','11','12','13'];
+const COND_OPTS=[{v:'digitalRead(2) == HIGH',l:'le bouton 2 est appuyé'},{v:'digitalRead(2) == LOW',l:'le bouton 2 est relâché'},{v:'analogRead(A0) > 511',l:'A0 dépasse 511'}];
+const qstr=s=>String(s).replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+const BLOCKS={
+  pinMode:{cat:'out',name:'Régler une broche',hint:'pinMode()',parts:['régler la broche',{p:'pin',opts:[...PINS,'i'],label:'broche'},'en',{p:'mode',opts:['OUTPUT','INPUT','INPUT_PULLUP'],label:'mode'}],def:{pin:'13',mode:'OUTPUT'},code:p=>`pinMode(${p.pin}, ${p.mode});`},
+  digitalWrite:{cat:'out',name:'Allumer ou éteindre',hint:'digitalWrite()',parts:['mettre la broche',{p:'pin',opts:[...PINS,'i'],label:'broche'},'à',{p:'val',opts:['HIGH','LOW'],label:'état'}],def:{pin:'13',val:'HIGH'},code:p=>`digitalWrite(${p.pin}, ${p.val});`},
+  delay:{cat:'time',name:'Attendre',hint:'delay()',parts:['attendre',{p:'ms',num:true,label:'millisecondes'},'ms'],def:{ms:'1000'},code:p=>`delay(${p.ms});`},
+  serialBegin:{cat:'serial',name:'Démarrer le moniteur',hint:'Serial.begin()',parts:['démarrer le moniteur série'],def:{},code:()=>`Serial.begin(9600);`},
+  printText:{cat:'serial',name:'Écrire un texte',hint:'Serial.println("…")',parts:['écrire',{p:'text',txt:true,label:'texte'}],def:{text:'Bonjour'},code:p=>`Serial.println("${qstr(p.text)}");`},
+  printA0:{cat:'serial',name:'Écrire la valeur de A0',hint:'Serial.println(analogRead(A0))',parts:['écrire la valeur lue sur A0'],def:{},code:()=>`Serial.println(analogRead(A0));`},
+  ifElse:{cat:'ctrl',name:'Si… sinon',hint:'if / else',parts:['si',{p:'cond',opts:COND_OPTS,label:'condition'}],def:{cond:'digitalRead(2) == HIGH'},container:['alors','sinon'],head:p=>`if (${p.cond}) {`},
+  forLoop:{cat:'ctrl',name:'Répéter avec un compteur',hint:'for',parts:['pour i de',{p:'from',num:true,label:'début'},'à',{p:'to',num:true,label:'fin'}],def:{from:'8',to:'12'},container:['faire'],head:p=>`for (int i = ${p.from}; i <= ${p.to}; i++) {`},
+  analogWrite:{cat:'an',name:'Régler l\'intensité',hint:'analogWrite()',parts:['intensité de la broche',{p:'pin',opts:['3','5','6','9','10','11'],label:'broche'},'à',{p:'val',opts:['0','64','128','255',{v:'analogRead(A0) / 4',l:'valeur de A0 ÷ 4'},'i'],label:'valeur'}],def:{pin:'9',val:'128'},code:p=>`analogWrite(${p.pin}, ${p.val});`},
+};
+const ALL_BLOCKS=Object.keys(BLOCKS);
+function B(type,p={},kids){ const d=BLOCKS[type]; return {type,p:{...d.def,...p},kids:kids||(d.container?d.container.map(()=>[]):undefined)}; }
+function genList(list,ind){ return list.map(b=>genBlock(b,ind)).join(''); }
+function genBlock(b,ind){
+  const pad='  '.repeat(ind), d=BLOCKS[b.type];
+  if(b.type==='ifElse') return `${pad}${d.head(b.p)}\n${genList(b.kids[0],ind+1)}${pad}} else {\n${genList(b.kids[1],ind+1)}${pad}}\n`;
+  if(b.type==='forLoop') return `${pad}${d.head(b.p)}\n${genList(b.kids[0],ind+1)}${pad}}\n`;
+  return pad+d.code(b.p)+'\n';
+}
+function genProgram(pr){ return `// Programme créé avec les blocs\n\nvoid setup() {\n  // s'exécute une seule fois, au démarrage\n${genList(pr.setup,1)}}\n\nvoid loop() {\n  // se répète sans fin\n${genList(pr.loop,1)}}\n`; }
+function sanitize(list){ if(!Array.isArray(list)) return []; return list.filter(b=>b&&BLOCKS[b.type]).map(b=>{ const d=BLOCKS[b.type]; const nb={type:b.type,p:{...d.def,...(b.p||{})}}; if(d.container) nb.kids=d.container.map((_,i)=>sanitize(b.kids&&b.kids[i])); return nb; }); }
+
+// ---------- Missions ----------
+function changes(hw,pin){ const out=[]; let prev=0; for(const e of hw.log) if(e.pin===pin&&e.kind==='d'&&e.v!==prev){ out.push(e); prev=e.v; } return out; }
+function onlyOrder(hw,seq){ let k=0; for(const s of hw.snaps){ const on=s.on.filter(p=>seq.includes(p)); if(on.length===1&&on[0]===seq[k]){ k++; if(k===seq.length) return true; } } return false; }
+const LEVELS=[
+  {id:'m1',num:1,title:'La première lumière',
+   story:'Ta carte Arduino est branchée. Une LED rouge attend sur la broche 13. À toi de l\'allumer.',
+   goal:'Allume la LED de la broche 13.',
+   concept:`<p>Un programme Arduino a toujours deux parties. <code>setup()</code> s'exécute une seule fois, quand la carte démarre : on y prépare les broches. <code>loop()</code> se répète ensuite sans fin.</p><p><code>pinMode(13, OUTPUT);</code> annonce que la broche 13 va <em>envoyer</em> du courant. <code>digitalWrite(13, HIGH);</code> met 5 volts sur la broche et la LED s'allume. <code>LOW</code> remet 0 volt.</p><p>En C++, chaque instruction se termine par un point-virgule <code>;</code>. Regarde le code se construire sous les blocs.</p>`,
+   blocks:['pinMode','digitalWrite'],newBlocks:['pinMode','digitalWrite'],
+   hint:'Dans la zone setup(), ajoute « régler la broche 13 en OUTPUT », puis « mettre la broche 13 à HIGH ». Clique ensuite sur Téléverser.',
+   win:'La LED brille. Tu viens d\'écrire tes deux premières instructions Arduino : pinMode et digitalWrite.',
+   solution:()=>({setup:[B('pinMode'),B('digitalWrite')],loop:[]}),
+   check:hw=>hw.mode[13]===1&&hw.val[13]===1},
+  {id:'m2',num:2,title:'Le phare',
+   story:'Un phare doit clignoter pour guider les bateaux dans la nuit. Fais clignoter la LED 13 : allumée, puis éteinte, encore et encore.',
+   goal:'Fais clignoter la LED 13 au moins deux fois, avec des pauses d\'au moins 100 ms.',
+   concept:`<p>La carte est très rapide : elle exécute des millions d'instructions par seconde. Sans pause, la LED changerait trop vite pour tes yeux.</p><p><code>delay(1000);</code> met le programme en pause pendant 1000 millisecondes, soit 1 seconde. Comme <code>loop()</code> se répète toute seule, il suffit d'écrire un seul clignotement : allumer, attendre, éteindre, attendre.</p>`,
+   blocks:['pinMode','digitalWrite','delay'],newBlocks:['delay'],
+   hint:'Garde pinMode dans setup(). Dans loop() : HIGH, attendre 1000 ms, LOW, attendre 1000 ms. Sans la dernière attente, la LED se rallume aussitôt éteinte !',
+   win:'Ton phare clignote. Tu as compris le rôle de loop() : elle recommence sans cesse.',
+   solution:()=>({setup:[B('pinMode')],loop:[B('digitalWrite',{val:'HIGH'}),B('delay'),B('digitalWrite',{val:'LOW'}),B('delay')]}),
+   check:hw=>{ const ch=changes(hw,13); return ch.length>=4&&ch.slice(1).every((c,i)=>c.t-ch[i].t>=100); }},
+  {id:'m3',num:3,title:'Le feu tricolore',
+   story:'Le carrefour devant l\'école a besoin d\'un feu. La LED verte est sur la broche 10, l\'orange sur la 11, la rouge sur la 12.',
+   goal:'Allume les feux un par un, dans l\'ordre vert, orange, rouge. Un seul feu allumé à la fois.',
+   concept:`<p>Chaque broche se pilote séparément : il faut une instruction <code>pinMode</code> pour chacune des trois LED.</p><p>Un feu qui passe au suivant, c'est trois étapes : éteindre l'ancien (<code>LOW</code>), allumer le nouveau (<code>HIGH</code>), puis attendre (<code>delay</code>). L'ordre des blocs, c'est l'ordre dans lequel la carte agit.</p>`,
+   blocks:['pinMode','digitalWrite','delay'],newBlocks:[],
+   hint:'Dans setup(), règle 10, 11 et 12 en OUTPUT. Dans loop() : vert HIGH, attendre, vert LOW, orange HIGH, attendre, orange LOW, rouge HIGH, attendre, rouge LOW.',
+   win:'Le carrefour est sécurisé. Tu sais piloter plusieurs broches dans un ordre précis.',
+   solution:()=>({setup:[B('pinMode',{pin:'10'}),B('pinMode',{pin:'11'}),B('pinMode',{pin:'12'})],loop:[B('digitalWrite',{pin:'10',val:'HIGH'}),B('delay',{ms:'3000'}),B('digitalWrite',{pin:'10',val:'LOW'}),B('digitalWrite',{pin:'11',val:'HIGH'}),B('delay',{ms:'1000'}),B('digitalWrite',{pin:'11',val:'LOW'}),B('digitalWrite',{pin:'12',val:'HIGH'}),B('delay',{ms:'3000'}),B('digitalWrite',{pin:'12',val:'LOW'})]}),
+   check:hw=>onlyOrder(hw,[10,11,12])},
+  {id:'m4',num:4,title:'La sonnette',
+   story:'Un bouton est branché sur la broche 2. Quand on appuie dessus, la LED 13 doit s\'allumer. Quand on le relâche, elle s\'éteint.',
+   goal:'La LED 13 suit le bouton. Lance le programme, puis maintiens le bouton noir du simulateur et relâche-le.',
+   concept:`<p><code>digitalRead(2)</code> lit l'état de la broche 2 : <code>HIGH</code> si le bouton est appuyé, <code>LOW</code> sinon. La broche se règle en entrée avec <code>pinMode(2, INPUT);</code>.</p><p>Le bloc <em>si… sinon</em> s'écrit <code>if (condition) { … } else { … }</code>. Le double égal <code>==</code> compare deux valeurs. Attention : un seul <code>=</code> sert à donner une valeur, c'est une erreur très courante.</p>`,
+   blocks:['pinMode','digitalWrite','delay','ifElse'],newBlocks:['ifElse'],
+   hint:'Dans loop(), place un bloc « si le bouton 2 est appuyé ». Dans « alors », mets la broche 13 à HIGH. Dans « sinon », mets-la à LOW. Clique sur la zone « alors » avant d\'ajouter le bloc.',
+   win:'Ta sonnette fonctionne. La carte lit une entrée et prend une décision : c\'est le cœur de tous les objets interactifs.',
+   solution:()=>({setup:[B('pinMode',{pin:'2',mode:'INPUT'}),B('pinMode')],loop:[B('ifElse',{},[[B('digitalWrite',{val:'HIGH'})],[B('digitalWrite',{val:'LOW'})]])]}),
+   check:hw=>{ const w=hw.log.filter(e=>e.pin===13&&e.kind==='d'); if(!w.length) return false; let bad=-1; w.forEach((e,i)=>{ if((e.v===1)!==e.btn) bad=i; }); const after=w.slice(bad+1); return after.some(e=>e.v===1&&e.btn)&&after.some(e=>e.v===0&&!e.btn); }},
+  {id:'m5',num:5,title:'Bonjour l\'ordinateur',
+   story:'L\'Arduino peut envoyer des messages à l\'ordinateur par le câble USB. Ils s\'affichent dans le moniteur série, en bas du simulateur.',
+   goal:'Écris « Bonjour » dans le moniteur série.',
+   concept:`<p><code>Serial.begin(9600);</code> ouvre la communication à 9600 bauds, c'est-à-dire 9600 bits par seconde. On l'écrit une fois, dans <code>setup()</code>.</p><p><code>Serial.println("Bonjour");</code> écrit une ligne. Un texte s'écrit toujours entre guillemets droits <code>"…"</code>. Le moniteur série sert surtout à comprendre ce que fait ton programme.</p>`,
+   blocks:['pinMode','digitalWrite','delay','ifElse','serialBegin','printText'],newBlocks:['serialBegin','printText'],
+   hint:'Dans setup() : « démarrer le moniteur série », puis « écrire Bonjour ». Si tu mets l\'écriture dans loop(), ajoute une attente pour ne pas inonder l\'écran.',
+   win:'Le message est arrivé. Le moniteur série est l\'outil préféré des programmeurs pour comprendre ce que fait leur carte.',
+   solution:()=>({setup:[B('serialBegin'),B('printText',{text:'Bonjour'})],loop:[]}),
+   check:hw=>hw.serialOn&&hw.lines.join('\n').toLowerCase().includes('bonjour')},
+  {id:'m6',num:6,title:'Le chenillard',
+   story:'Pour la fête de l\'école, les LED 8 à 12 doivent s\'allumer l\'une après l\'autre, comme une lumière qui court.',
+   goal:'Allume les LED 8, 9, 10, 11 et 12 une par une, dans l\'ordre, en utilisant une boucle « pour » (for).',
+   concept:`<p>Au lieu de copier cinq fois les mêmes blocs, une boucle répète des instructions en changeant un compteur.</p><p><code>for (int i = 8; i &lt;= 12; i++) { … }</code> : le compteur <code>i</code> vaut 8, puis 9, puis 10… jusqu'à 12. <code>i++</code> veut dire « ajoute 1 à i ». À l'intérieur de la boucle, choisis <code>i</code> comme numéro de broche.</p>`,
+   blocks:['pinMode','digitalWrite','delay','ifElse','serialBegin','printText','forLoop'],newBlocks:['forLoop'],
+   hint:'Dans setup() : une boucle pour i de 8 à 12 qui règle la broche i en OUTPUT. Dans loop() : une boucle pour i de 8 à 12 qui met la broche i à HIGH, attend 200 ms, puis la met à LOW.',
+   win:'Une seule boucle pour cinq LED. Avec for, tu pourrais en piloter cinquante sans écrire plus de code.',
+   solution:()=>({setup:[B('forLoop',{},[[B('pinMode',{pin:'i'})]])],loop:[B('forLoop',{},[[B('digitalWrite',{pin:'i',val:'HIGH'}),B('delay',{ms:'200'}),B('digitalWrite',{pin:'i',val:'LOW'})]])]}),
+   check:(hw,m)=>m&&m.usedFor&&onlyOrder(hw,[8,9,10,11,12])},
+  {id:'m7',num:7,title:'Le variateur',
+   story:'Un potentiomètre, un bouton qu\'on tourne, est branché sur A0. Il doit régler la luminosité de la LED bleue de la broche 9.',
+   goal:'La luminosité de la LED 9 suit le potentiomètre. Lance le programme, puis déplace le curseur du potentiomètre d\'un bout à l\'autre.',
+   concept:`<p><code>analogRead(A0)</code> donne un nombre entre 0 et 1023 selon la position du potentiomètre.</p><p><code>analogWrite(9, valeur);</code> règle l'intensité avec un nombre entre 0 et 255. La broche s'allume et s'éteint si vite que la LED paraît plus ou moins forte : c'est le PWM. Seules les broches marquées <code>~</code> (3, 5, 6, 9, 10, 11) savent le faire.</p><p>Comme 1023 ÷ 4 ≈ 255, il suffit de diviser par 4 : <code>analogWrite(9, analogRead(A0) / 4);</code></p>`,
+   blocks:ALL_BLOCKS.filter(t=>t!=='forLoop').concat('forLoop'),newBlocks:['analogWrite','printA0'],
+   hint:'Dans loop(), ajoute « intensité de la broche 9 à valeur de A0 ÷ 4 », puis une petite attente de 20 ms. Pour voir les valeurs, démarre le moniteur dans setup() et écris la valeur de A0.',
+   win:'Tu as transformé une valeur de 0 à 1023 en luminosité de 0 à 255. Dans de vrais projets, on écrit aussi map(valeur, 0, 1023, 0, 255).',
+   solution:()=>({setup:[],loop:[B('analogWrite',{pin:'9',val:'analogRead(A0) / 4'}),B('delay',{ms:'20'})]}),
+   check:hw=>{ const a=hw.log.filter(e=>e.kind==='a'&&e.pin===9); if(!a.length) return false; const good=e=>Math.abs(e.v-e.pot/4)<=4; if(!good(a[a.length-1])) return false; const pots=a.filter(good).map(e=>e.pot); return Math.max(...pots)-Math.min(...pots)>=300; }},
+  {id:'m8',num:8,title:'Défi C++ : le compteur',cppOnly:true,
+   story:'Fini les blocs : tu écris maintenant comme un vrai développeur Arduino. Il faut compter combien de fois on appuie sur le bouton.',
+   goal:'À chaque appui sur le bouton (broche 2), écris le nouveau total dans le moniteur série : 1, puis 2, puis 3. Un appui long doit compter pour un seul.',
+   concept:`<p>Une variable garde une valeur en mémoire. <code>int compteur = 0;</code> crée une variable entière qui vaut 0. Écrite en dehors des fonctions, elle garde sa valeur d'un tour de <code>loop()</code> à l'autre.</p><p><code>compteur++;</code> ajoute 1. <code>Serial.println(compteur);</code> affiche sa valeur.</p><p>Piège : <code>loop()</code> tourne des milliers de fois pendant que ton doigt appuie. Après avoir compté, attends que le bouton soit relâché avec une boucle <code>while (digitalRead(2) == HIGH) { delay(10); }</code>.</p>`,
+   blocks:[],newBlocks:[],
+   starter:`int compteur = 0;
+
+void setup() {
+  pinMode(2, INPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // À toi : si le bouton est appuyé,
+  // ajoute 1 au compteur et affiche-le.
+
+}
+`,
+   hint:'Utilise if (digitalRead(2) == HIGH) { … }. Dedans : compteur++; puis Serial.println(compteur); puis une boucle while qui attend tant que le bouton est encore appuyé.',
+   win:'Tu as écrit ton propre programme C++. Il fonctionne tel quel dans l\'IDE Arduino, sur une vraie carte.',
+   solutionCpp:`int compteur = 0;
+
+void setup() {
+  pinMode(2, INPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  if (digitalRead(2) == HIGH) {
+    compteur++;
+    Serial.println(compteur);
+    // attendre que le bouton soit relâché
+    while (digitalRead(2) == HIGH) {
+      delay(10);
+    }
+  }
+}
+`,
+   check:hw=>{ if(hw.presses<3) return false; const nums=hw.lines.slice(0,-1).map(s=>{const m=s.match(/(-?\d+)\s*$/); return m?Number(m[1]):null;}).filter(v=>v!==null); if(!nums.length||nums[nums.length-1]!==hw.presses) return false; return /(^|,)1,2,3(,|$)/.test(nums.join(',')); }},
+  {id:'libre',num:null,title:'Atelier libre',
+   story:'Tous les blocs sont débloqués, et l\'onglet C++ t\'attend. Invente ton propre programme : une guirlande, une alarme, un jeu de réflexes…',
+   goal:null,conceptTitle:'Aide-mémoire',
+   concept:`<div class="tablewrap"><table>
+<tr><td><code>pinMode(b, OUTPUT)</code></td><td>règle la broche b en sortie (ou INPUT, INPUT_PULLUP)</td></tr>
+<tr><td><code>digitalWrite(b, HIGH)</code></td><td>allume (HIGH) ou éteint (LOW) la broche b</td></tr>
+<tr><td><code>digitalRead(b)</code></td><td>lit HIGH ou LOW sur la broche b</td></tr>
+<tr><td><code>analogRead(A0)</code></td><td>lit un nombre de 0 à 1023</td></tr>
+<tr><td><code>analogWrite(b, v)</code></td><td>intensité de 0 à 255 sur une broche ~</td></tr>
+<tr><td><code>delay(ms)</code></td><td>attend ms millisecondes</td></tr>
+<tr><td><code>millis()</code></td><td>temps écoulé depuis le démarrage, en ms</td></tr>
+<tr><td><code>random(a, b)</code></td><td>nombre au hasard entre a et b − 1</td></tr>
+<tr><td><code>map(x, 0, 1023, 0, 255)</code></td><td>change l'échelle d'une valeur</td></tr>
+<tr><td><code>Serial.println(x)</code></td><td>écrit x dans le moniteur série</td></tr>
+</table></div><p>Sur le simulateur : LED sur les broches 8 à 13 (la 9 sait varier), bouton sur la broche 2, potentiomètre sur A0.</p>`,
+   blocks:ALL_BLOCKS,newBlocks:[],hint:null,check:null},
+];
+const MISSION_COUNT=LEVELS.filter(l=>l.num).length;
+
+// ---------- État ----------
+const STORE_KEY='atelier-arduino-v1';
+let store={done:{},progs:{},last:0,ex:{},view:'missions'};
+try{ const raw=localStorage.getItem(STORE_KEY); if(raw){ const s=JSON.parse(raw); if(s&&typeof s==='object') store={done:s.done||{},progs:s.progs||{},last:s.last||0,ex:s.ex||{},view:s.view||'missions'}; } }catch(e){}
+function save(){ try{ localStorage.setItem(STORE_KEY,JSON.stringify(store)); }catch(e){} }
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function el(tag,cls,text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+
+const io={btn:false,pot:512,render:()=>render(),serialChanged:()=>serialChanged(),message:(t,m)=>message(t,m)};
+const hw=new Hardware(io);
+let curIdx=0, prog={setup:[],loop:[]}, mode='blocks', activeList=prog.setup, machine=null;
+let running=false, runId=0, sleeper=null, speed=1, successShown=false, genErr=0, edErr=0;
+
+const cppEl=$('#cpp'), hlEl=$('#hl'), gutterEl=$('#gutter'), zonesEl=$('#zones'), palEl=$('#palette'), genEl=$('#genCode'), msgsEl=$('#msgs');
+
+let pt=null;
+function persist(){ clearTimeout(pt); pt=setTimeout(saveCurrent,250); }
+function saveCurrent(){ const L=LEVELS[curIdx]; if(!L) return; store.progs[L.id]={blocks:prog,cpp:cppEl.value,mode}; store.last=curIdx; save(); }
+
+// ---------- Rendu des missions ----------
+function renderStrip(){
+  const strip=$('#strip'); strip.replaceChildren();
+  LEVELS.forEach((L,i)=>{
+    const b=el('button','mbtn'+(store.done[L.id]?' done':''),L.num?String(L.num):'Libre');
+    b.type='button'; b.title=L.title;
+    b.setAttribute('aria-label',(L.num?`Mission ${L.num} : `:'')+L.title+(store.done[L.id]?', réussie':''));
+    if(i===curIdx) b.setAttribute('aria-current','true');
+    b.addEventListener('click',()=>loadLevel(i));
+    strip.append(b);
+  });
+  const n=LEVELS.filter(L=>L.num&&store.done[L.id]).length;
+  $('#progress').textContent=`${n} mission${n>1?'s':''} réussie${n>1?'s':''} sur ${MISSION_COUNT}`;
+}
+function renderMission(){
+  const L=LEVELS[curIdx], m=$('#mission');
+  const hasSol=!!(L.solution||L.solutionCpp);
+  m.innerHTML=`<h2>${L.num?`Mission ${L.num} : `:''}${esc(L.title)}</h2>
+  <p class="story">${esc(L.story)}</p>
+  ${L.goal?`<div class="goal"><h3>Objectif</h3><p>${esc(L.goal)}</p></div>`:''}
+  <details class="concept"${(L.num===1||L.cppOnly||!L.num)?' open':''}><summary>${L.conceptTitle||'Comprendre le code'}</summary>${L.concept}</details>
+  ${(L.hint||hasSol)?`<div class="mactions">${L.hint?'<button type="button" class="ghost" id="hintBtn" aria-expanded="false">Afficher un indice</button>':''}${hasSol?'<button type="button" class="ghost" id="solBtn">Charger une solution</button>':''}</div>`:''}
+  ${L.hint?`<p class="hint" id="hintTxt" hidden>${esc(L.hint)}</p>`:''}`;
+  const hb=$('#hintBtn'); if(hb) hb.addEventListener('click',()=>{ const t=$('#hintTxt'); t.hidden=!t.hidden; hb.textContent=t.hidden?'Afficher un indice':'Masquer l\'indice'; hb.setAttribute('aria-expanded',String(!t.hidden)); });
+  const sb=$('#solBtn'); if(sb) sb.addEventListener('click',loadSolution);
+}
+function loadSolution(){
+  const L=LEVELS[curIdx]; stopRun();
+  if(L.solutionCpp){ cppEl.value=L.solutionCpp; refreshEditor(); setMode('cpp'); }
+  else { prog=L.solution(); activeList=prog.loop; renderZones(); setMode('blocks'); }
+  persist(); clearMessages();
+  message('info','Solution chargée. Lance-la avec Téléverser, puis essaie de la modifier pour voir ce qui change.');
+}
+
+// ---------- Palette et zones ----------
+function renderPalette(){
+  const L=LEVELS[curIdx]; palEl.replaceChildren();
+  for(const t of L.blocks){
+    const d=BLOCKS[t]; const b=el('button','pchip c-'+d.cat); b.type='button'; b.draggable=true;
+    b.append(el('span','pname',d.name),el('code','phint',d.hint));
+    if(L.newBlocks.includes(t)) b.append(el('span','pnew','nouveau'));
+    b.setAttribute('aria-label',`Ajouter le bloc ${d.name} (${d.hint})`);
+    b.addEventListener('click',()=>addBlock(t));
+    b.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/plain','blk:'+t); e.dataTransfer.effectAllowed='copy'; });
+    palEl.append(b);
+  }
+}
+let slotEls=[];
+function renderZones(){
+  slotEls=[];
+  zonesEl.replaceChildren(makeZone('void setup() {','une seule fois, au démarrage',prog.setup),makeZone('void loop() {','ensuite en boucle, sans jamais s\'arrêter',prog.loop));
+  renderGen();
+}
+function makeZone(head,sub,list){
+  const z=el('section','zone'); const h=el('div','zhead');
+  h.append(el('code','zsig',head),el('span','zsub',sub));
+  z.append(h,makeSlot(list),el('code','zend','}'));
+  return z;
+}
+function pickList(list){ activeList=list; slotEls.forEach(o=>o.s.classList.toggle('active',o.list===activeList)); }
+function makeSlot(list){
+  const s=el('div','slot'); s.tabIndex=0; slotEls.push({s,list});
+  s.setAttribute('aria-label','Zone de blocs : appuie sur Entrée pour y ajouter les prochains blocs');
+  if(list===activeList) s.classList.add('active');
+  s.addEventListener('click',e=>{ e.stopPropagation(); if(e.target.closest('select,input,button')&&e.target.closest('.slot')!==s) return; pickList(list); });
+  s.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target===s){ e.preventDefault(); pickList(list); } });
+  s.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); s.classList.add('dragover'); });
+  s.addEventListener('dragleave',e=>{ e.stopPropagation(); s.classList.remove('dragover'); });
+  s.addEventListener('drop',e=>{ e.preventDefault(); e.stopPropagation(); s.classList.remove('dragover'); const d=e.dataTransfer.getData('text/plain'); if(d.startsWith('blk:')&&BLOCKS[d.slice(4)]){ activeList=list; addBlock(d.slice(4)); } });
+  if(!list.length) s.append(el('p','empty','Vide. Clique ici, puis choisis un bloc dans la liste.'));
+  for(const b of list) s.append(makeBlock(b,list));
+  return s;
+}
+function makeBlock(b,list){
+  const d=BLOCKS[b.type]; const w=el('div','block c-'+d.cat);
+  const head=el('div','bhead'), parts=el('div','bparts');
+  let codeEl=null;
+  const upd=()=>{ codeEl.textContent=d.head?d.head(b.p):d.code(b.p); genErr=0; renderGen(); persist(); };
+  for(const part of d.parts){
+    if(typeof part==='string'){ parts.append(el('span','',part)); continue; }
+    let inp;
+    if(part.opts){
+      inp=el('select');
+      const vals=part.opts.map(o=>typeof o==='string'?o:o.v);
+      if(!vals.includes(b.p[part.p])) b.p[part.p]=vals[0];
+      for(const o of part.opts){ const v=typeof o==='string'?o:o.v, l=typeof o==='string'?o:o.l; const op=el('option','',l); op.value=v; inp.append(op); }
+      inp.value=b.p[part.p];
+    } else if(part.num){ inp=el('input','num'); inp.type='number'; inp.min='0'; inp.max='60000'; inp.step='1'; inp.inputMode='numeric'; inp.value=b.p[part.p]; }
+    else { inp=el('input','txt'); inp.type='text'; inp.maxLength=40; inp.value=b.p[part.p]; }
+    inp.setAttribute('aria-label',part.label);
+    inp.addEventListener(part.opts?'change':'input',()=>{ let v=inp.value; if(part.num) v=String(Math.max(0,Math.min(60000,Math.trunc(Number(v)||0)))); b.p[part.p]=v; upd(); });
+    parts.append(inp);
+  }
+  const ctl=el('div','bctl');
+  const mk=(t,lab,fn)=>{ const x=el('button','',t); x.type='button'; x.title=lab; x.setAttribute('aria-label',lab); x.addEventListener('click',e=>{ e.stopPropagation(); fn(); }); return x; };
+  ctl.append(mk('↑','Monter le bloc',()=>moveBlock(list,b,-1)),mk('↓','Descendre le bloc',()=>moveBlock(list,b,1)),mk('✕','Supprimer le bloc',()=>removeBlock(list,b)));
+  head.append(parts,ctl); w.append(head);
+  codeEl=el('code','bcode',d.head?d.head(b.p):d.code(b.p)); w.append(codeEl);
+  if(d.container){
+    d.container.forEach((lab,i)=>{
+      if(i>0) w.append(el('code','bsep','} else {'));
+      const inner=el('div','binner'); inner.append(el('span','blab',lab),makeSlot(b.kids[i])); w.append(inner);
+    });
+    w.append(el('code','bsep','}'));
+  }
+  return w;
+}
+function contains(b,L){ return !!(b.kids&&b.kids.some(k=>k===L||k.some(c=>contains(c,L)))); }
+function attached(L){ return L===prog.setup||L===prog.loop||[...prog.setup,...prog.loop].some(b=>contains(b,L)); }
+function addBlock(type){
+  if(LEVELS[curIdx].cppOnly) return;
+  if(!attached(activeList)) activeList=prog.loop;
+  activeList.push(B(type)); genErr=0; renderZones(); persist();
+}
+function moveBlock(list,b,dir){ const i=list.indexOf(b), j=i+dir; if(j<0||j>=list.length) return; [list[i],list[j]]=[list[j],list[i]]; genErr=0; renderZones(); persist(); }
+function removeBlock(list,b){ const i=list.indexOf(b); if(i<0) return; list.splice(i,1); if(contains(b,activeList)) activeList=prog.loop; genErr=0; renderZones(); persist(); }
+
+// ---------- Coloration du code ----------
+const KWS=new Set(['void','int','long','float','double','bool','boolean','byte','char','String','unsigned','const','if','else','for','while','do','return','break','continue','true','false','static','word']);
+const CONSTS=new Set(['HIGH','LOW','OUTPUT','INPUT','INPUT_PULLUP','LED_BUILTIN','A0','A1','A2','A3','A4','A5']);
+const span=(c,t)=>`<span class="${c}">${esc(t)}</span>`;
+function highlight(src){
+  let out=''; const re=/(\/\/[^\n]*)|("(?:[^"\\\n]|\\.)*"?)|('(?:[^'\\\n]|\\.)*'?)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_]\w*)|([\s\S])/g; let m;
+  while((m=re.exec(src))){
+    if(m[1]) out+=span('cm',m[1]);
+    else if(m[2]||m[3]) out+=span('st',m[2]||m[3]);
+    else if(m[4]) out+=span('nu',m[4]);
+    else if(m[5]){ const w=m[5]; if(KWS.has(w)) out+=span('kw',w); else if(BUILTINS[w]||w==='Serial'||w==='delay'||w==='setup'||w==='loop'||w==='println'||w==='begin'||w==='print') out+=span('fn',w); else if(CONSTS.has(w)) out+=span('co',w); else out+=esc(w); }
+    else out+=esc(m[6]);
+  }
+  return out;
+}
+function renderGen(){
+  const lines=highlight(genProgram(prog)).split('\n');
+  if(lines[lines.length-1]==='') lines.pop();
+  genEl.innerHTML=lines.map((h,i)=>`<span class="l${i+1===genErr?' errl':''}">${h||' '}</span>`).join('');
+}
+
+// ---------- Éditeur C++ ----------
+let gutterCount=-1;
+function refreshEditor(){
+  hlEl.innerHTML=highlight(cppEl.value)+'\n ';
+  const n=cppEl.value.split('\n').length;
+  if(n!==gutterCount||edErr){ gutterCount=n; let h=''; for(let i=1;i<=n;i++) h+=`<div${i===edErr?' class="errl"':''}>${i}</div>`; gutterEl.innerHTML=h+'<div>&nbsp;</div>'; }
+  syncScroll();
+}
+function syncScroll(){ hlEl.scrollTop=cppEl.scrollTop; hlEl.scrollLeft=cppEl.scrollLeft; gutterEl.scrollTop=cppEl.scrollTop; }
+cppEl.addEventListener('input',()=>{ if(edErr){ edErr=0; gutterCount=-1; } refreshEditor(); persist(); });
+cppEl.addEventListener('scroll',syncScroll);
+cppEl.addEventListener('keydown',e=>{
+  if(e.key==='Tab'&&!e.shiftKey&&!e.ctrlKey&&!e.metaKey){ e.preventDefault(); cppEl.setRangeText('  ',cppEl.selectionStart,cppEl.selectionEnd,'end'); cppEl.dispatchEvent(new Event('input')); }
+  else if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){
+    const v=cppEl.value, pos=cppEl.selectionStart; const ls=v.lastIndexOf('\n',pos-1)+1; const ind=(v.slice(ls,pos).match(/^[ \t]*/)||[''])[0];
+    const extra=/\{\s*$/.test(v.slice(ls,pos))?'  ':'';
+    e.preventDefault(); cppEl.setRangeText('\n'+ind+extra,pos,cppEl.selectionEnd,'end'); cppEl.dispatchEvent(new Event('input'));
+  }
+});
+
+// ---------- Onglets ----------
+function setMode(m){
+  const L=LEVELS[curIdx]; if(L.cppOnly) m='cpp';
+  mode=m;
+  $('#blocksView').hidden=m!=='blocks'; $('#cppView').hidden=m!=='cpp';
+  $('#tabB').setAttribute('aria-selected',String(m==='blocks')); $('#tabC').setAttribute('aria-selected',String(m==='cpp'));
+  $('#tabB').disabled=!!L.cppOnly;
+  $('#fromBlocks').hidden=!!L.cppOnly;
+  $('#tabnote').textContent=L.cppOnly?'Mission en C++ uniquement':(m==='cpp'?'C\'est ce code qui sera téléversé':'');
+  if(m==='cpp'){ if(!cppEl.value.trim()) cppEl.value=genProgram(prog); refreshEditor(); }
+  persist();
+}
+$('#tabB').addEventListener('click',()=>setMode('blocks'));
+$('#tabC').addEventListener('click',()=>setMode('cpp'));
+$('#fromBlocks').addEventListener('click',()=>{ cppEl.value=genProgram(prog); edErr=0; gutterCount=-1; refreshEditor(); persist(); message('info','Le code des blocs a été copié dans l\'éditeur C++.'); });
+async function copyText(txt,fallbackEl){
+  try{ await navigator.clipboard.writeText(txt); message('info','Code copié. Tu peux le coller dans l\'IDE Arduino.'); }
+  catch(e){ try{ const r=document.createRange(); r.selectNodeContents(fallbackEl); const s=getSelection(); s.removeAllRanges(); s.addRange(r); }catch(_){} message('info','Le code est sélectionné : copie-le avec Ctrl+C (ou Cmd+C).'); }
+}
+$('#copyBtn').addEventListener('click',()=>copyText(genProgram(prog),genEl));
+$('#copyCpp').addEventListener('click',()=>{ cppEl.focus(); cppEl.select(); copyText(cppEl.value,cppEl); });
+
+// ---------- Carte (SVG) ----------
+const DIG=[['AREF',170],['GND',190],['13',210],['12',230],['11',250],['10',270],['9',290],['8',310],['7',342],['6',362],['5',382],['4',402],['3',422],['2',442],['1',462],['0',482]];
+const PWR=[['IOREF',196],['RESET',214],['3V3',232],['5V',250],['GND',268],['GND',286],['VIN',304],['A0',340],['A1',358],['A2',376],['A3',394],['A4',412],['A5',430]];
+const LED_DEFS=[{pin:13,c:'#E53935',w:'#8E5AC8'},{pin:12,c:'#E53935',w:'#D84343'},{pin:11,c:'#FB8C00',w:'#E88A1A'},{pin:10,c:'#43A047',w:'#2E9E55'},{pin:9,c:'#1E88E5',w:'#2B7BD6'},{pin:8,c:'#FDD835',w:'#C9A615'}];
+function buildBoard(){
+  const X={}; DIG.forEach(([n,x])=>X[n]=x); PWR.forEach(([n,x])=>X[n]=x);
+  const mono='font-family="JetBrains Mono, ui-monospace, monospace"';
+  let s=`<svg viewBox="0 0 560 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Carte Arduino Uno avec six LED sur les broches 8 à 13, un bouton sur la broche 2 et un potentiomètre sur A0">
+<defs><pattern id="hp" width="10" height="10" patternUnits="userSpaceOnUse"><rect x="3.5" y="3.5" width="3" height="3" rx=".6" fill="#CFCFC4"/></pattern>
+<filter id="gl" x="-150%" y="-150%" width="400%" height="400%"><feGaussianBlur stdDeviation="7"/></filter></defs>
+<rect x="20" y="6" width="534" height="168" rx="8" fill="#F5F4EE" stroke="#D8D6CA"/>
+<rect x="30" y="26" width="514" height="140" fill="url(#hp)"/>
+<line x1="30" y1="14" x2="544" y2="14" stroke="#D65050" stroke-width="1.5"/><line x1="30" y1="20" x2="544" y2="20" stroke="#4E79C4" stroke-width="1.5"/>
+<text x="40" y="60" ${mono} font-size="10" fill="#7A8789">plaque d'essai</text>
+<rect x="20" y="196" width="530" height="240" rx="16" fill="#00878F" stroke="#00666C" stroke-width="2"/>`;
+  for(const [x,y] of [[44,222],[528,252],[44,414],[528,414]]) s+=`<circle cx="${x}" cy="${y}" r="7" fill="#E9EEED" stroke="#9FB3B1"/>`;
+  s+=`<rect x="4" y="244" width="70" height="54" rx="3" fill="#CDD2D6" stroke="#959CA2"/><rect x="12" y="254" width="54" height="34" fill="#B4BAC0"/>
+<rect x="4" y="330" width="60" height="50" rx="5" fill="#25292C"/>
+<rect x="92" y="212" width="18" height="18" rx="3" fill="#D9DDE0"/><circle cx="101" cy="221" r="5" fill="#C4473B"/>
+<rect x="150" y="300" width="34" height="14" rx="7" fill="#C9CDD2"/>
+<rect x="300" y="318" width="190" height="44" rx="3" fill="#1B1F22"/>`;
+  for(let i=0;i<14;i++){ const x=306+i*13.4; s+=`<rect x="${x}" y="312" width="6" height="6" fill="#C9CDD2"/><rect x="${x}" y="362" width="6" height="6" fill="#C9CDD2"/>`; }
+  s+=`<text x="90" y="404" font-family="Bricolage Grotesque, system-ui, sans-serif" font-size="32" font-weight="800" fill="#fff" opacity=".92">UNO</text>
+<rect x="160" y="204" width="160" height="20" rx="2" fill="#1F2326"/><rect x="332" y="204" width="160" height="20" rx="2" fill="#1F2326"/>
+<rect x="186" y="412" width="128" height="18" rx="2" fill="#1F2326"/><rect x="330" y="412" width="110" height="18" rx="2" fill="#1F2326"/>`;
+  for(const [n,x] of DIG){ const pwm=PWM_PINS.includes(Number(n)); s+=`<rect x="${x-4}" y="210" width="8" height="8" fill="#0A0C0D"/><text x="${x}" y="236" text-anchor="middle" ${mono} font-size="${n.length>2?6.5:8.5}" fill="#fff">${pwm?'~':''}${n}</text>`; }
+  for(const [n,x] of PWR){ s+=`<rect x="${x-4}" y="417" width="8" height="8" fill="#0A0C0D"/><text x="${x}" y="406" text-anchor="middle" ${mono} font-size="${n.length>2?6:7.5}" fill="#fff">${n}</text>`; }
+  s+=`<text x="412" y="252" text-anchor="middle" ${mono} font-size="8" fill="#fff" opacity=".85">broches numériques (~ = PWM)</text>
+<text x="385" y="394" text-anchor="middle" ${mono} font-size="8" fill="#fff" opacity=".85">entrées analogiques</text>
+<rect id="ledL" x="196" y="258" width="12" height="7" rx="1" fill="#FFB300" opacity=".15"/><text x="214" y="265" ${mono} font-size="8" fill="#fff">L</text>
+<rect id="ledTX" x="196" y="272" width="12" height="7" rx="1" fill="#FFB300" opacity=".15"/><text x="214" y="279" ${mono} font-size="8" fill="#fff">TX</text>
+<rect x="196" y="286" width="12" height="7" rx="1" fill="#FFB300" opacity=".15"/><text x="214" y="293" ${mono} font-size="8" fill="#fff">RX</text>
+<rect x="500" y="282" width="12" height="7" rx="1" fill="#5CFF8A"/><text x="494" y="289" text-anchor="end" ${mono} font-size="8" fill="#fff">ON</text>`;
+  // composants
+  for(const d of LED_DEFS){
+    const x=X[String(d.pin)];
+    s+=`<path d="M${x} 136 V 214" stroke="${d.w}" stroke-width="4" stroke-linecap="round"/>
+<path d="M${x-4} 86 V 112 M${x+4} 86 V 102" stroke="#9AA3A8" stroke-width="2"/>
+<rect x="${x-5}" y="110" width="10" height="26" rx="4" fill="#D8C29A" stroke="#B49C70"/>
+<line x1="${x-5}" y1="116" x2="${x+5}" y2="116" stroke="#6D4C2F" stroke-width="2"/><line x1="${x-5}" y1="121" x2="${x+5}" y2="121" stroke="#222" stroke-width="2"/><line x1="${x-5}" y1="126" x2="${x+5}" y2="126" stroke="#B3302B" stroke-width="2"/>
+<circle id="g${d.pin}" cx="${x}" cy="68" r="20" fill="${d.c}" filter="url(#gl)" opacity="0"/>
+<path d="M${x-9} 84 V 66 a9 9 0 0 1 18 0 V 84 Z" fill="${d.c}" opacity=".26" stroke="${d.c}" stroke-opacity=".8"/>
+<path id="o${d.pin}" d="M${x-9} 84 V 66 a9 9 0 0 1 18 0 V 84 Z" fill="${d.c}" opacity="0"/>
+<ellipse cx="${x-3}" cy="66" rx="2.5" ry="5" fill="#fff" opacity=".55"/>
+<rect x="${x-11}" y="82" width="22" height="5" rx="1.5" fill="${d.c}" opacity=".55"/>
+<text x="${x}" y="40" text-anchor="middle" ${mono} font-size="10" fill="#46575B">${d.pin}</text>`;
+  }
+  const bx=X['2'];
+  s+=`<path d="M${bx} 100 V 214" stroke="#5B6670" stroke-width="4" stroke-linecap="round"/>
+<path d="M${bx-8} 84 V 100 M${bx+8} 84 V 96" stroke="#9AA3A8" stroke-width="2"/>
+<text x="${bx}" y="40" text-anchor="middle" ${mono} font-size="10" fill="#46575B">bouton 2</text>
+<g id="btnG" role="button" tabindex="0" aria-label="Bouton de la broche 2. Maintiens pour appuyer." aria-pressed="false">
+<rect x="${bx-26}" y="44" width="52" height="52" fill="transparent"/>
+<rect class="btnbody" x="${bx-16}" y="52" width="32" height="32" rx="3" fill="#2A2E31"/>
+<circle cx="${bx-12}" cy="56" r="1.6" fill="#555"/><circle cx="${bx+12}" cy="56" r="1.6" fill="#555"/><circle cx="${bx-12}" cy="80" r="1.6" fill="#555"/><circle cx="${bx+12}" cy="80" r="1.6" fill="#555"/>
+<circle id="btnCap" cx="${bx}" cy="68" r="10" fill="#5A6066"/></g>`;
+  const ax=X['A0'];
+  s+=`<path d="M${ax} 421 V 456" stroke="#E86FA5" stroke-width="4" stroke-linecap="round"/>
+<circle cx="${ax}" cy="474" r="19" fill="#2D6CB5"/><circle cx="${ax}" cy="474" r="12" fill="#E8EBED"/>
+<line id="potInd" x1="${ax}" y1="474" x2="${ax}" y2="464" stroke="#2D3236" stroke-width="3" stroke-linecap="round"/>
+<text x="${ax+28}" y="478" ${mono} font-size="10" fill="currentColor">potentiomètre A0</text>
+</svg>`;
+  return s;
+}
+$('#board').innerHTML=buildBoard();
+const ledEls={}; for(const d of LED_DEFS) ledEls[d.pin]={on:document.getElementById('o'+d.pin),glow:document.getElementById('g'+d.pin)};
+const ledL=$('#ledL'), ledTX=$('#ledTX'), btnG=$('#btnG'), btnCap=$('#btnCap'), potInd=$('#potInd');
+
+let rq=false;
+function render(){ if(rq) return; rq=true; requestAnimationFrame(()=>{ rq=false; draw(); }); }
+function draw(){
+  for(const d of LED_DEFS){ const b=hw.brightness(d.pin); ledEls[d.pin].on.setAttribute('opacity',b.toFixed(3)); ledEls[d.pin].glow.setAttribute('opacity',(b*.85).toFixed(3)); }
+  ledL.setAttribute('opacity',(0.15+0.85*hw.brightness(13)).toFixed(3));
+  btnCap.setAttribute('fill',io.btn?'#F2A93B':'#5A6066'); btnCap.setAttribute('r',io.btn?'8.5':'10');
+  btnG.setAttribute('aria-pressed',String(io.btn));
+  potInd.setAttribute('transform',`rotate(${(-135+270*io.pot/1023).toFixed(1)} ${PWR.find(p=>p[0]==='A0')[1]} 474)`);
+  const st=$('#status');
+  if(running){
+    const t=(hw.time/1000).toFixed(1).replace('.',',');
+    let txt=`En marche : ${t} s simulées, loop() exécutée ${hw.loops} fois`;
+    if(LEVELS[curIdx].id==='m8') txt+=`, bouton appuyé ${hw.presses} fois`;
+    st.textContent=txt; st.classList.add('on');
+  } else { st.textContent='Carte à l\'arrêt'; st.classList.remove('on'); }
+}
+let srq=false, txTimer=null;
+function serialChanged(){
+  ledTX.setAttribute('opacity','1'); clearTimeout(txTimer); txTimer=setTimeout(()=>ledTX.setAttribute('opacity','.15'),80);
+  if(srq) return; srq=true;
+  requestAnimationFrame(()=>{ srq=false; const o=$('#serialOut'); const txt=hw.lines.join('\n'); o.textContent=txt.length?txt:''; o.scrollTop=o.scrollHeight; });
+}
+$('#clearSerial').addEventListener('click',()=>{ hw.lines=['']; $('#serialOut').textContent=''; });
+
+function press(down){
+  if(io.btn===down) return;
+  io.btn=down; if(down&&running) hw.presses++;
+  render();
+}
+btnG.addEventListener('pointerdown',e=>{ e.preventDefault(); try{ btnG.setPointerCapture(e.pointerId); }catch(_){} press(true); });
+btnG.addEventListener('pointerup',()=>press(false));
+btnG.addEventListener('pointercancel',()=>press(false));
+btnG.addEventListener('lostpointercapture',()=>press(false));
+btnG.addEventListener('keydown',e=>{ if((e.key===' '||e.key==='Enter')&&!e.repeat){ e.preventDefault(); press(true); } });
+btnG.addEventListener('keyup',e=>{ if(e.key===' '||e.key==='Enter'){ e.preventDefault(); press(false); } });
+btnG.addEventListener('blur',()=>press(false));
+$('#potIn').addEventListener('input',e=>{ io.pot=Number(e.target.value); $('#potOut').textContent=e.target.value; render(); });
+$('#speed').addEventListener('change',e=>{ speed=Number(e.target.value)||1; });
+
+// ---------- Messages ----------
+function message(type,text){
+  const d=el('div','msg '+type); d.textContent=text; msgsEl.append(d);
+  while(msgsEl.children.length>5) msgsEl.firstChild.remove();
+}
+function clearMessages(){ msgsEl.replaceChildren(); }
+
+// ---------- Exécution ----------
+function sleep(ms){ return new Promise(res=>{ const t=setTimeout(()=>{ sleeper=null; res(); },ms); sleeper={t,res}; }); }
+function updateRunUI(){ $('#stopBtn').disabled=!running; $('#runBtn').textContent=running?'Téléverser à nouveau':'Téléverser'; render(); }
+function stopRun(){ runId++; running=false; if(sleeper){ clearTimeout(sleeper.t); const r=sleeper.res; sleeper=null; r(); } updateRunUI(); }
+function showError(e){
+  if(e instanceof CodeError){
+    message('err',e.message);
+    if(e.line){ if(mode==='cpp'){ edErr=e.line; gutterCount=-1; refreshEditor(); } else { genErr=e.line; renderGen(); } }
+  } else { message('err','Erreur inattendue du simulateur : '+(e&&e.message||e)); console.error(e); }
+}
+function checkLevel(){
+  const L=LEVELS[curIdx]; if(!L.check||successShown) return;
+  let ok=false; try{ ok=L.check(hw,machine); }catch(_){}
+  if(ok) onSuccess();
+}
+function onSuccess(){
+  const L=LEVELS[curIdx]; successShown=true; store.done[L.id]=true; save();
+  $('#winTxt').textContent=L.win; const nb=$('#nextBtn');
+  nb.textContent=curIdx+1<LEVELS.length?(LEVELS[curIdx+1].num?'Mission suivante':'Ouvrir l\'atelier libre'):'Rester ici';
+  $('#success').hidden=false; renderStrip();
+}
+$('#nextBtn').addEventListener('click',()=>{ if(curIdx+1<LEVELS.length) loadLevel(curIdx+1); else $('#success').hidden=true; });
+
+async function startRun(){
+  stopRun(); clearMessages(); hw.reset(); genErr=0; edErr=0; gutterCount=-1;
+  if(mode==='cpp') refreshEditor(); else renderGen();
+  $('#serialOut').textContent='';
+  const src=mode==='cpp'?cppEl.value:genProgram(prog);
+  let ast, parser;
+  try{ parser=new Parser(tokenize(src,{})); ast=parser.parseProgram(); }
+  catch(e){ showError(e); render(); return; }
+  machine=new Machine(ast,hw); machine.usedFor=parser.usedFor;
+  if(mode==='blocks'&&!prog.setup.length&&!prog.loop.length) message('warn','Ton programme est vide. Ajoute des blocs dans setup() ou loop().');
+  const id=++runId; running=true; updateRunUI();
+  const gen=machine.main(); let lastFrame=performance.now(), lastCheck=0;
+  try{
+    while(id===runId){
+      const r=gen.next(); if(r.done) break;
+      const y=r.value; const now=performance.now();
+      if(y.delay!==undefined){
+        hw.snap(); hw.time+=y.delay; checkLevel(); lastCheck=now; render();
+        const ms=y.delay/speed;
+        if(ms>=1){ await sleep(ms); lastFrame=performance.now(); }
+        else if(now-lastFrame>30){ await sleep(0); lastFrame=performance.now(); }
+      } else {
+        if(now-lastCheck>60){ checkLevel(); lastCheck=now; render(); }
+        if(now-lastFrame>30){ await sleep(0); lastFrame=performance.now(); }
+      }
+    }
+  }catch(e){ if(id===runId){ showError(e); } }
+  if(id===runId){ running=false; updateRunUI(); }
+}
+$('#runBtn').addEventListener('click',startRun);
+$('#stopBtn').addEventListener('click',()=>{ stopRun(); message('info','Programme arrêté. Les broches gardent leur dernier état.'); });
+
+// ---------- Changement de mission ----------
+function loadLevel(i){
+  stopRun(); if(prog) saveCurrent();
+  curIdx=Math.max(0,Math.min(LEVELS.length-1,i)); const L=LEVELS[curIdx];
+  const s=store.progs[L.id];
+  prog=s&&s.blocks?{setup:sanitize(s.blocks.setup),loop:sanitize(s.blocks.loop)}:{setup:[],loop:[]};
+  activeList=(prog.setup.length||prog.loop.length)?prog.loop:prog.setup;
+  cppEl.value=s&&typeof s.cpp==='string'&&s.cpp.trim()?s.cpp:(L.starter||'');
+  edErr=0; genErr=0; gutterCount=-1;
+  successShown=false; $('#success').hidden=true;
+  hw.reset(); clearMessages(); $('#serialOut').textContent='';
+  renderStrip(); renderMission(); renderPalette(); renderZones();
+  setMode(L.cppOnly?'cpp':(s&&s.mode)||'blocks');
+  refreshEditor(); render();
+  store.last=curIdx; save();
+}
+
+// ---------- Exercices ----------
+const TYPE_LABEL={orga:'Organigramme vers code',qcm:'Quiz',trous:'Complète le code',bug:'Trouve l\'erreur',ordre:'Remets dans l\'ordre',sortie:'Devine le résultat'};
+const W_SERIAL='void setup() {\n  Serial.begin(9600);\n{code}\n}\n\nvoid loop() {\n}';
+const EXERCISES=[
+ {id:'e1',theme:'Les bases',type:'qcm',q:'Combien de fois la fonction setup() s\'exécute-t-elle ?',
+  opts:['Une seule fois, au démarrage de la carte','À chaque tour de loop()','Jamais, sauf si on l\'appelle','Une fois par seconde'],a:0,
+  exp:'setup() prépare la carte : elle s\'exécute une seule fois, quand la carte s\'allume ou après un reset. Ensuite, loop() tourne sans fin.'},
+ {id:'e2',theme:'Les bases',type:'trous',q:'Complète le code pour allumer la LED de la broche 13.',
+  code:'void setup() {\n  pinMode(13, {0});\n  digitalWrite(13, {1});\n}\n\nvoid loop() {\n}',
+  blanks:[['INPUT','OUTPUT','HIGH'],['LOW','HIGH','OUTPUT']],a:['OUTPUT','HIGH'],tryable:true,
+  exp:'La broche doit d\'abord devenir une sortie (OUTPUT), puis on y met 5 volts avec HIGH.'},
+ {id:'e3',theme:'Les bases',type:'bug',q:'Ce programme refuse de se téléverser. Clique sur la ligne qui contient l\'erreur.',
+  code:'void setup() {\n  pinMode(13, OUTPUT);\n  digitalWrite(13, HIGH)\n}\n\nvoid loop() {\n}',a:3,
+  exp:'Il manque le point-virgule à la fin de digitalWrite(13, HIGH). En C++, chaque instruction se termine par « ; ».'},
+ {id:'e4',theme:'Les bases',type:'bug',q:'Le programme se lance, mais la LED reste éteinte. Quelle ligne est en cause ?',
+  code:'void setup() {\n  pinMode(13, INPUT);\n}\n\nvoid loop() {\n  digitalWrite(13, HIGH);\n}',a:2,
+  exp:'Pour allumer une LED, la broche doit être une sortie : pinMode(13, OUTPUT). En INPUT, la carte écoute la broche au lieu d\'y envoyer du courant.'},
+
+ {id:'e5',theme:'Le temps',type:'qcm',q:'delay(250) met le programme en pause pendant…',
+  opts:['250 secondes','Un quart de seconde','2,5 secondes','250 minutes'],a:1,
+  exp:'delay compte en millisecondes : 1000 ms font 1 seconde, donc 250 ms font un quart de seconde.'},
+ {id:'e6',theme:'Le temps',type:'ordre',q:'Remets les lignes de loop() dans l\'ordre pour faire clignoter la LED 13.',
+  pre:'void loop() {',post:'}',lines:['digitalWrite(13, HIGH);','delay(500);','digitalWrite(13, LOW);','delay(500);'],start:[2,1,0,3],
+  runWrap:'void setup() {\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n{code}\n}',
+  hint:'Une LED qui clignote : on l\'allume, on attend, on l\'éteint, on attend.',
+  exp:'Allumer, attendre, éteindre, attendre. Chaque changement est suivi d\'une pause, sinon tes yeux ne le verraient pas.'},
+ {id:'e7',theme:'Le temps',type:'qcm',q:'Avec ce loop(), la LED semble toujours allumée. Pourquoi ?',
+  code:'void loop() {\n  digitalWrite(13, HIGH);\n  delay(1000);\n  digitalWrite(13, LOW);\n}',
+  opts:['Il manque une pause après LOW : la LED se rallume aussitôt','delay(1000) est trop court pour être vu','LOW allume la LED au lieu de l\'éteindre','loop() ne se répète qu\'une fois'],a:0,
+  run:'void setup() {\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  digitalWrite(13, HIGH);\n  delay(1000);\n  digitalWrite(13, LOW);\n}',
+  exp:'Après LOW, loop() recommence tout de suite et remet HIGH. La LED est éteinte pendant une fraction de milliseconde : invisible. Il faut ajouter delay(1000) à la fin.'},
+
+ {id:'e8',theme:'Les conditions',type:'trous',q:'Complète le code : la LED s\'allume quand le bouton est appuyé, et s\'éteint sinon.',
+  code:'if (digitalRead(2) {0} HIGH) {\n  digitalWrite(13, HIGH);\n} {1} {\n  digitalWrite(13, LOW);\n}',
+  blanks:[['=','==','!='],['else','then','or']],a:['==','else'],
+  runWrap:'void setup() {\n  pinMode(2, INPUT);\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n{code}\n}',
+  exp:'== compare deux valeurs. else introduit ce qui se passe quand la condition est fausse.'},
+ {id:'e9',theme:'Les conditions',type:'bug',q:'Ce programme refuse de se téléverser. Trouve la ligne fautive.',
+  code:'void setup() {\n  pinMode(2, INPUT);\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  if (digitalRead(2) = HIGH) {\n    digitalWrite(13, HIGH);\n  } else {\n    digitalWrite(13, LOW);\n  }\n}',a:7,
+  exp:'Un seul = donne une valeur, il ne compare pas. Pour comparer, il faut deux signes : ==.'},
+ {id:'e10',theme:'Les conditions',type:'qcm',q:'La broche 2 est réglée avec pinMode(2, INPUT_PULLUP). Que renvoie digitalRead(2) quand on appuie sur le bouton ?',
+  opts:['HIGH','LOW','1023','Rien du tout'],a:1,
+  run:'void setup() {\n  pinMode(2, INPUT_PULLUP);\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  Serial.println(digitalRead(2));\n  delay(500);\n}',
+  exp:'Avec INPUT_PULLUP, une résistance interne maintient la broche à HIGH. Appuyer relie la broche à la masse : on lit LOW. La logique est inversée.'},
+
+ {id:'e11',theme:'Le moniteur série',type:'sortie',multiline:true,q:'Qu\'affiche le moniteur série ? Écris les lignes comme elles apparaissent.',
+  code:'Serial.print("Ar");\nSerial.println("duino");\nSerial.println("ok");',a:['Arduino\nok'],runWrap:W_SERIAL,
+  hint:'print écrit sans aller à la ligne. println va à la ligne après avoir écrit.',
+  exp:'print n\'ajoute pas de retour à la ligne, donc « Ar » et « duino » sont collés. La deuxième ligne est « ok ».'},
+ {id:'e12',theme:'Le moniteur série',type:'bug',q:'Ce programme refuse de se téléverser. Quelle ligne pose problème ?',
+  code:'void setup() {\n  Serial.begin(9600);\n  Serial.println(Bonjour);\n}\n\nvoid loop() {\n}',a:3,
+  exp:'Un texte s\'écrit entre guillemets : Serial.println("Bonjour"). Sans guillemets, la carte croit que Bonjour est le nom d\'une variable.'},
+
+ {id:'e13',theme:'Les boucles',type:'sortie',q:'Quel est le dernier nombre affiché ?',
+  code:'for (int i = 0; i < 5; i++) {\n  Serial.println(i);\n}',a:['4'],runWrap:W_SERIAL,
+  hint:'Note toutes les valeurs de i une par une, et vérifie la condition i < 5 à chaque fois.',
+  exp:'i vaut 0, 1, 2, 3 puis 4. Quand i atteint 5, la condition i < 5 est fausse et la boucle s\'arrête. Cinq lignes, la dernière est 4.'},
+ {id:'e14',theme:'Les boucles',type:'trous',q:'Complète la boucle pour allumer les LED 8, 9, 10, 11 et 12.',
+  code:'for (int i = {0}; i {1} 12; i++) {\n  digitalWrite(i, HIGH);\n}',blanks:[['0','8','12'],['<','<=','==']],a:['8','<='],
+  runWrap:'void setup() {\n  for (int i = 8; i <= 12; i++) {\n    pinMode(i, OUTPUT);\n  }\n{code}\n}\n\nvoid loop() {\n}',
+  hint:'Le compteur doit commencer à la première LED. Et la LED 12 doit être incluse.',
+  exp:'i commence à 8. Avec <=, la boucle continue tant que i vaut 12 ou moins : la LED 12 est incluse. Avec <, elle serait oubliée.'},
+ {id:'e15',theme:'Les boucles',type:'sortie',q:'Qu\'affiche ce code ?',
+  code:'int total = 0;\nfor (int i = 1; i <= 4; i++) {\n  total = total + i;\n}\nSerial.println(total);',a:['10'],runWrap:W_SERIAL,
+  hint:'Ajoute 1, puis 2, puis 3, puis 4 à total.',
+  exp:'total vaut 0 + 1 + 2 + 3 + 4 = 10. La variable total s\'accumule à chaque tour.'},
+
+ {id:'e16',theme:'L\'analogique',type:'qcm',q:'analogRead(A0) renvoie un nombre compris entre…',
+  opts:['0 et 1','0 et 255','0 et 1023','0 et 5'],a:2,
+  run:'void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  Serial.println(analogRead(A0));\n  delay(300);\n}',
+  exp:'Le convertisseur de l\'Arduino Uno découpe la tension de 0 à 5 V en 1024 niveaux : de 0 à 1023. Dans l\'atelier, bouge le potentiomètre pour le vérifier.'},
+ {id:'e17',theme:'L\'analogique',type:'sortie',q:'Que vaut v ?',code:'int v = map(512, 0, 1023, 0, 255);\nSerial.println(v);',a:['127'],runWrap:W_SERIAL,
+  hint:'512 est à peu près la moitié de 1023. Et les nombres entiers perdent leur partie après la virgule.',
+  exp:'map passe d\'une échelle à une autre. 512 est environ la moitié de 1023, donc le résultat est environ la moitié de 255 : 127,6, arrondi vers le bas à 127.'},
+ {id:'e18',theme:'L\'analogique',type:'bug',q:'La LED ne varie pas : elle est soit éteinte, soit allumée à fond. Quelle ligne pose problème ?',
+  code:'void setup() {\n}\n\nvoid loop() {\n  analogWrite(7, analogRead(A0) / 4);\n  delay(20);\n}',a:5,
+  exp:'La broche 7 ne sait pas faire de PWM. Seules les broches marquées ~ (3, 5, 6, 9, 10 et 11) peuvent faire varier l\'intensité.'},
+
+ {id:'e19',theme:'Les variables',type:'sortie',q:'Qu\'affiche ce code ?',code:'int x = 5;\nx++;\nx = x * 2;\nSerial.println(x);',a:['12'],runWrap:W_SERIAL,
+  hint:'x++ ajoute 1 à x.',
+  exp:'x vaut 5, puis 6 après x++, puis 6 × 2 = 12.'},
+ {id:'e20',theme:'Les variables',type:'qcm',q:'Que vaut resultat ?',code:'int resultat = 7 / 2;',
+  opts:['3,5','3','4','2'],a:1,
+  run:'void setup() {\n  Serial.begin(9600);\n  int resultat = 7 / 2;\n  Serial.println(resultat);\n  Serial.println(7.0 / 2);\n}\n\nvoid loop() {\n}',
+  exp:'Entre deux nombres entiers, la division coupe tout ce qui est après la virgule : 7 / 2 donne 3. Pour obtenir 3.5, il faut un nombre à virgule : 7.0 / 2.'},
+ {id:'e21',theme:'Les variables',type:'qcm',q:'Ce compteur affiche toujours 1. Pourquoi ?',
+  code:'void loop() {\n  int compteur = 0;\n  compteur++;\n  Serial.println(compteur);\n  delay(1000);\n}',
+  opts:['La variable est recréée à 0 à chaque tour de loop()','compteur++ ne fonctionne pas avec int','Serial.println ne sait afficher que 1','delay remet les variables à zéro'],a:0,
+  run:'void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  int compteur = 0;\n  compteur++;\n  Serial.println(compteur);\n  delay(1000);\n}',
+  exp:'Une variable déclarée dans loop() est recréée à chaque tour. Pour qu\'elle garde sa valeur, déclare-la en dehors des fonctions, tout en haut du programme.'},
+
+ {id:'o1',theme:'Les organigrammes',type:'orga',q:'Traduis cet organigramme en C++ : complète le code.',
+  chart:[{t:'start',x:'Début'},{t:'proc',x:'Broche 13 en sortie'},{t:'forever',body:[{t:'proc',x:'Allumer la LED 13'},{t:'proc',x:'Attendre 1 seconde'},{t:'proc',x:'Éteindre la LED 13'},{t:'proc',x:'Attendre 1 seconde'}]}],
+  code:'void setup() {\n  pinMode(13, {0});\n}\n\nvoid loop() {\n  digitalWrite(13, {1});\n  delay({2});\n  digitalWrite(13, {3});\n  delay(1000);\n}',
+  blanks:[['INPUT','OUTPUT'],['HIGH','LOW'],{text:true},['HIGH','LOW']],a:['OUTPUT','HIGH',['1000'],'LOW'],tryable:true,
+  hint:'Ce qui est avant la flèche qui remonte va dans setup(). Ce qui se répète va dans loop(). Une seconde, c\'est combien de millisecondes ?',
+  exp:'Chaque rectangle devient une instruction. Ce qui se fait une fois au début va dans setup(), la partie entourée par la flèche qui remonte va dans loop(). 1 seconde = 1000 ms.'},
+ {id:'o2',theme:'Les organigrammes',type:'orga',q:'Écris les trois morceaux de code qui manquent pour suivre cet organigramme.',
+  chart:[{t:'start',x:'Début'},{t:'proc',x:'Broche 2 en entrée\nBroche 13 en sortie'},{t:'forever',body:[{t:'if',x:'Bouton 2\nappuyé ?',yes:[{t:'proc',x:'Allumer la LED 13'}],no:[{t:'proc',x:'Éteindre la LED 13'}]}]}],
+  code:'void setup() {\n  pinMode(2, INPUT);\n  pinMode(13, OUTPUT);\n}\n\nvoid loop() {\n  if ({0}) {\n    {1}\n  } else {\n    {2}\n  }\n}',
+  blanks:[{text:true},{text:true},{text:true}],
+  a:[['digitalRead(2) == HIGH','digitalRead(2) == 1','HIGH == digitalRead(2)','digitalRead(2)'],['digitalWrite(13, HIGH);'],['digitalWrite(13, LOW);']],tryable:true,
+  hint:'Le losange devient la condition du if : on lit le bouton avec digitalRead(2) et on compare avec ==. Les actions se terminent par un point-virgule.',
+  exp:'Le losange est une question : il devient if (…). La branche « oui » va entre les premières accolades, la branche « non » après else.'},
+ {id:'o3',theme:'Les organigrammes',type:'orga',q:'Les parallélogrammes sont des entrées et des sorties. Complète le code.',
+  chart:[{t:'start',x:'Début'},{t:'proc',x:'Démarrer la liaison\nsérie à 9600 bauds'},{t:'forever',body:[{t:'io',x:'Lire A0 → valeur'},{t:'io',x:'Afficher valeur'},{t:'proc',x:'Attendre 500 ms'}]}],
+  code:'int valeur = 0;\n\nvoid setup() {\n  {0}\n}\n\nvoid loop() {\n  valeur = {1};\n  {2}\n  delay(500);\n}',
+  blanks:[{text:true},{text:true},{text:true}],
+  a:[['Serial.begin(9600);'],['analogRead(A0)'],['Serial.println(valeur);']],tryable:true,
+  hint:'Démarrer la liaison : Serial.begin(…). Lire une broche analogique : analogRead(…). Afficher : Serial.println(…).',
+  exp:'« Lire » devient analogRead(A0), dont on range le résultat dans valeur. « Afficher » devient Serial.println(valeur). Dans l\'atelier, bouge le potentiomètre pour voir les valeurs changer.'},
+ {id:'o4',theme:'Les organigrammes',type:'orga',q:'Cet organigramme compte de 8 à 12. Complète la boucle for qui lui correspond.',
+  chart:[{t:'start',x:'Début'},{t:'proc',x:'i = 8'},{t:'while',x:'i ≤ 12 ?',body:[{t:'proc',x:'Allumer la LED i'},{t:'proc',x:'Attendre 200 ms'},{t:'proc',x:'Éteindre la LED i'},{t:'proc',x:'i = i + 1'}]},{t:'end',x:'Fin'}],
+  code:'for (int i = {0}; i {1} {2}; {3}) {\n  digitalWrite(i, HIGH);\n  delay(200);\n  digitalWrite(i, LOW);\n}',
+  blanks:[{text:true},['<','<=','>='],{text:true},['i++','i--','i + 1']],a:[['8'],'<=',['12'],'i++'],
+  runWrap:'void setup() {\n  for (int i = 8; i <= 12; i++) {\n    pinMode(i, OUTPUT);\n  }\n}\n\nvoid loop() {\n{code}\n}',
+  hint:'Repère trois choses : la valeur de départ de i, la question du losange, et ce qui arrive à i en bas de la boucle.',
+  exp:'Départ, question et « i = i + 1 » : les trois morceaux de l\'organigramme tiennent sur une seule ligne for. ≤ s\'écrit <= et « ajouter 1 à i » s\'écrit i++.'},
+ {id:'o5',theme:'Les organigrammes',type:'orga',q:'Un compteur d\'appuis. Écris les instructions qui manquent.',
+  chart:[{t:'start',x:'Début'},{t:'proc',x:'compteur = 0'},{t:'proc',x:'Démarrer la liaison série'},{t:'forever',body:[{t:'if',x:'Bouton 2\nappuyé ?',yes:[{t:'proc',x:'compteur = compteur + 1'},{t:'io',x:'Afficher compteur'},{t:'proc',x:'Attendre 300 ms'}],no:[]}]}],
+  code:'int compteur = {0};\n\nvoid setup() {\n  pinMode(2, INPUT);\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  if (digitalRead(2) == HIGH) {\n    {1}\n    {2}\n    delay(300);\n  }\n}',
+  blanks:[{text:true},{text:true},{text:true}],
+  a:[['0'],['compteur++;','compteur = compteur + 1;','compteur += 1;','++compteur;'],['Serial.println(compteur);']],tryable:true,
+  hint:'« compteur = compteur + 1 » peut s\'écrire tel quel, avec un point-virgule, ou plus court avec ++.',
+  exp:'La branche « non » est vide : pas besoin de else. compteur est déclaré tout en haut pour garder sa valeur entre deux tours de loop().'},
+ {id:'o6',theme:'Les organigrammes',type:'orga',q:'Une veilleuse qui s\'allume dans le noir. Complète le code à partir de l\'organigramme.',
+  chart:[{t:'start',x:'Début'},{t:'proc',x:'Broche 12 en sortie'},{t:'forever',body:[{t:'io',x:'Lire A0 → lumiere'},{t:'if',x:'lumiere\n< 300 ?',yes:[{t:'proc',x:'Allumer la LED 12'}],no:[{t:'proc',x:'Éteindre la LED 12'}]},{t:'proc',x:'Attendre 100 ms'}]}],
+  code:'void setup() {\n  pinMode(12, OUTPUT);\n}\n\nvoid loop() {\n  int lumiere = {0};\n  if ({1}) {\n    digitalWrite(12, HIGH);\n  } else {\n    digitalWrite(12, LOW);\n  }\n  {2}\n}',
+  blanks:[{text:true},{text:true},{text:true}],
+  a:[['analogRead(A0)'],['lumiere < 300','300 > lumiere'],['delay(100);']],tryable:true,
+  hint:'Recopie la question du losange sans le point d\'interrogation. Le dernier rectangle est une attente.',
+  exp:'Le parallélogramme « Lire » devient analogRead(A0). Le losange devient la condition lumiere < 300. Le rectangle après la fusion des deux branches vient après le if / else. Dans l\'atelier, baisse le potentiomètre sous 300 pour allumer la LED.'},
+ {id:'o7',theme:'Les organigrammes',type:'qcm',q:'Quelle instruction C++ correspond à ce morceau d\'organigramme ?',
+  chart:[{t:'proc',x:'Compter un appui'},{t:'while',x:'Bouton 2 encore\nappuyé ?',body:[{t:'proc',x:'Attendre 10 ms'}]},{t:'proc',x:'Suite du programme'}],
+  opts:['while (digitalRead(2) == HIGH) { delay(10); }','if (digitalRead(2) == HIGH) { delay(10); }','for (int i = 0; i < 10; i++) { delay(10); }','delay(digitalRead(2));'],a:0,
+  exp:'La flèche qui remonte vers le losange montre qu\'on repose la question tant que la réponse est « oui » : c\'est une boucle while. Un if pose la question une seule fois.'},
+];
+
+
+function flowchart(seq){
+  const P=[]; const B={minX:1e9,maxX:-1e9,maxY:0};
+  const W=196,H=42,DW=176,DH=66,G=26;
+  const ext=(x1,x2,y)=>{ B.minX=Math.min(B.minX,x1); B.maxX=Math.max(B.maxX,x2); B.maxY=Math.max(B.maxY,y); };
+  const line=(pts,arrow=true)=>{ P.push(`<polyline class="fe" points="${pts.map(p=>p.join(',')).join(' ')}"${arrow?' marker-end="url(#fa)"':''}/>`); pts.forEach(p=>ext(p[0],p[0],p[1])); };
+  const txt=(x,y,t,cls='ft')=>{ const ls=t.split('\n'); ls.forEach((l,i)=>P.push(`<text class="${cls}" x="${x}" y="${(y+(i-(ls.length-1)/2)*15).toFixed(1)}" text-anchor="middle" dominant-baseline="central">${esc(l)}</text>`)); };
+  const lab=(x,y,t)=>P.push(`<text class="fl" x="${x}" y="${y}">${t}</text>`);
+  const diamond=(cx,y,t)=>{ P.push(`<polygon class="fd" points="${cx},${y} ${cx+DW/2},${y+DH/2} ${cx},${y+DH} ${cx-DW/2},${y+DH/2}"/>`); txt(cx,y+DH/2,t); ext(cx-DW/2,cx+DW/2,y+DH); };
+  function seqDraw(s,cx,y){ let bottom=null; for(const n of s){ if(bottom!==null) line([[cx,bottom],[cx,y]]); bottom=elem(n,cx,y); y=bottom+G; } return bottom; }
+  function elem(n,cx,y){
+    switch(n.t){
+      case 'start': case 'end': P.push(`<rect class="fs" x="${cx-W/2+30}" y="${y}" width="${W-60}" height="${H}" rx="${H/2}"/>`); txt(cx,y+H/2,n.x,'ftw'); ext(cx-W/2,cx+W/2,y+H); return y+H;
+      case 'proc': P.push(`<rect class="fp" x="${cx-W/2}" y="${y}" width="${W}" height="${H}" rx="3"/>`); txt(cx,y+H/2,n.x); ext(cx-W/2,cx+W/2,y+H); return y+H;
+      case 'io': P.push(`<polygon class="fi" points="${cx-W/2+12},${y} ${cx+W/2+12},${y} ${cx+W/2-12},${y+H} ${cx-W/2-12},${y+H}"/>`); txt(cx,y+H/2,n.x); ext(cx-W/2-12,cx+W/2+12,y+H); return y+H;
+      case 'if':{
+        diamond(cx,y,n.x);
+        const top=y+DH+G, nx=cx+DW/2+W/2+34;
+        let yb=y+DH, nb=null;
+        if(n.yes.length){ line([[cx,y+DH],[cx,top]]); yb=seqDraw(n.yes,cx,top); }
+        lab(cx+7,y+DH+15,'oui'); lab(cx+DW/2+6,y+DH/2-7,'non');
+        if(n.no.length){ line([[cx+DW/2,y+DH/2],[nx,y+DH/2],[nx,top]]); nb=seqDraw(n.no,nx,top); }
+        const m=Math.max(yb,nb||0)+G;
+        line([[cx,yb],[cx,m]],false);
+        if(n.no.length) line([[nx,nb],[nx,m],[cx+4,m]]);
+        else { const ex=cx+DW/2+30; line([[cx+DW/2,y+DH/2],[ex,y+DH/2],[ex,m],[cx+4,m]]); }
+        P.push(`<circle cx="${cx}" cy="${m}" r="3.5" class="fah"/>`);
+        return m;
+      }
+      case 'while':{
+        diamond(cx,y,n.x);
+        const top=y+DH+G; line([[cx,y+DH],[cx,top]]); lab(cx+7,y+DH+15,'oui');
+        const bb=seqDraw(n.body,cx,top); const lx=cx-W/2-30, rx=cx+DW/2+34;
+        line([[cx,bb],[cx,bb+14],[lx,bb+14],[lx,y+DH/2],[cx-DW/2,y+DH/2]]);
+        lab(cx+DW/2+6,y+DH/2-7,'non');
+        line([[cx+DW/2,y+DH/2],[rx,y+DH/2],[rx,bb+36],[cx+4,bb+36]]);
+        return bb+36;
+      }
+      case 'forever':{
+        const bb=seqDraw(n.body,cx,y); const lx=cx-W/2-38;
+        line([[cx,bb],[cx,bb+16],[lx,bb+16],[lx,y-12],[cx-3,y-12]]);
+        P.push(`<text class="fl" x="${lx+6}" y="${bb+32}">loop() recommence</text>`); ext(lx,lx+120,bb+36);
+        return bb+16;
+      }
+    }
+    return y;
+  }
+  const bottom=seqDraw(seq,0,12);
+  ext(0,0,bottom);
+  const x0=B.minX-14, w=B.maxX-B.minX+28, h=B.maxY+16;
+  return `<svg class="fc" style="width:${Math.round(w)}px" viewBox="${x0} 0 ${w} ${h}" role="img" aria-label="Organigramme"><defs><marker id="fa" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" class="fah"/></marker></defs>${P.join('')}</svg>`;
+}
+const FC_LEGEND=`<div class="legend fc" aria-label="Légende des formes">
+<span><svg viewBox="0 0 30 18"><rect class="fs" x="1" y="2" width="28" height="14" rx="7"/></svg>début ou fin</span>
+<span><svg viewBox="0 0 30 18"><rect class="fp" x="2" y="2" width="26" height="14" rx="1"/></svg>action</span>
+<span><svg viewBox="0 0 30 18"><polygon class="fi" points="7,2 29,2 23,16 1,16"/></svg>entrée ou sortie</span>
+<span><svg viewBox="0 0 30 18"><polygon class="fd" points="15,1 29,9 15,17 1,9"/></svg>question (oui / non)</span></div>`;
+function chartFigure(e){ const f=el('figure','fcwrap'); f.innerHTML=flowchart(e.chart)+FC_LEGEND; return f; }
+function blanksPre(e){
+  const pre=el('pre','codeview');
+  const parts=e.code.split(/\{(\d)\}/); let html='';
+  parts.forEach((p,i)=>{
+    if(i%2===0){ html+=highlight(p); return; }
+    const k=Number(p), spec=e.blanks[k];
+    if(Array.isArray(spec)) html+=`<select class="blank" data-b="${k}" aria-label="Trou ${k+1}"><option value="">…</option>${spec.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select>`;
+    else { const first=[].concat(e.a[k])[0]; html+=`<input class="blank btxt" data-b="${k}" size="${Math.max(6,first.length+2)}" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Trou ${k+1} à écrire">`; }
+  });
+  pre.innerHTML=html.split('\n').map(h=>`<span class="l">${h||' '}</span>`).join('');
+  pre.querySelectorAll('.blank').forEach(s=>{
+    s.addEventListener(s.tagName==='SELECT'?'change':'input',()=>s.classList.remove('good','bad'));
+    if(s.tagName==='INPUT') s.addEventListener('keydown',ev=>{ if(ev.key==='Enter') ev.preventDefault(); });
+  });
+  return pre;
+}
+const normCode=x=>String(x).replace(/\s+/g,'');
+function blankOk(e,k,v){ const spec=e.blanks[k]; if(Array.isArray(spec)) return v===e.a[k]; return [].concat(e.a[k]).some(a=>normCode(a)===normCode(v)); }
+function blankAnswer(e,k){ return [].concat(e.a[k])[0]; }
+
+// ---------- Contrôle noté ----------
+const TEACHER_HASH='9dca7973f4f3be3cabf571325b544483c0831d70975a45c1a38e67557890ca72';
+const EXAM_KEY='atelier-arduino-controle-v1';
+const EXAM_DURATION_MS=20*60*1000;
+let examTimerHandle=null, examFinishing=false;
+const NQ=EXERCISES.length;
+let exam=null, lastName='', lastClasse='';
+try{ const r=localStorage.getItem(EXAM_KEY); if(r) exam=JSON.parse(r); }catch(e){}
+function saveExamLocal(){ try{ if(exam) localStorage.setItem(EXAM_KEY,JSON.stringify(exam)); else localStorage.removeItem(EXAM_KEY); }catch(e){} }
+const cloud={db:null,user:null,uid:null,owner:false,ready:false,last:null};
+let exIdx=0, exSel=null, teacherOpen=false;
+
+function hlLines(code){ return highlight(code).split('\n'); }
+function codeBlock(code,marks){ const pre=el('pre','codeview'); pre.innerHTML=hlLines(code).map((h,i)=>`<span class="l${marks&&marks[i+1]?' '+marks[i+1]:''}">${h||' '}</span>`).join(''); return pre; }
+const normOut=s=>String(s).replace(/\r/g,'').split('\n').map(l=>l.trim().replace(/\s+/g,' ')).filter(Boolean).join('\n').toLowerCase().replace(/,/g,'.');
+const fmtNote=n=>String(n).replace('.',',');
+const fmtDate=iso=>{ try{ return new Date(iso).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'}); }catch(e){ return iso||''; } };
+
+function answered(e,a){
+  if(a===undefined||a===null) return false;
+  if(e.type==='trous'||e.type==='orga') return Array.isArray(a)&&a.some(v=>String(v||'').trim()!=='');
+  if(e.type==='sortie') return String(a).trim()!=='';
+  return true;
+}
+function isCorrect(e,a){
+  switch(e.type){
+    case 'qcm': case 'bug': return a===e.a;
+    case 'trous': case 'orga': return Array.isArray(a)&&e.blanks.every((_,k)=>blankOk(e,k,String(a[k]==null?'':a[k])));
+    case 'ordre': return Array.isArray(a)&&a.map(i=>e.lines[i]).join('\n')===e.lines.join('\n');
+    case 'sortie': return a!=null&&String(a).trim()!==''&&e.a.some(x=>normOut(x)===normOut(a));
+  }
+  return false;
+}
+
+// ----- Envoi direct vers Google Sheets via Google Apps Script -----
+// Après déploiement du script Apps Script fourni avec ce fichier, colle ici son URL /exec.
+const GOOGLE_SCRIPT_URL= 'https://script.google.com/macros/s/AKfycbwUaw6GDX1cm3wGvqbYgxA0JTFOGGt4DjQfzn168-zK7CJbPLoRKq9i5xveHeErM4i-XA/exec';
+async function gasCall(action,data={}){
+  if(!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('COLLER_ICI')) return null;
+  try{
+    const body=new URLSearchParams({action,...Object.fromEntries(Object.entries(data).map(([k,v])=>[k,typeof v==='string'?v:JSON.stringify(v)]))});
+    const r=await fetch(GOOGLE_SCRIPT_URL,{method:'POST',body});
+    return await r.json();
+  }catch(e){ console.warn('Apps Script',e); return null; }
+}
+
+// ----- Cloud (base de données de l'artifact) -----
+async function initCloud(){
+  try{
+    if(window.claude&&typeof window.claude.use==='function'){
+      const [d,u]=await Promise.all([window.claude.use('db'),window.claude.use('user')]);
+      cloud.db=d; cloud.user=u;
+      if(u){ cloud.uid=await u.id(); cloud.owner=!!(await u.isOwner()); }
+      if(d&&cloud.uid){
+        const snap=await d.doc('results/'+cloud.uid).get();
+        if(snap.exists){ cloud.last=JSON.parse(JSON.stringify(snap.data())); syncFromCloud(cloud.last); }
+      }
+    }
+  }catch(e){ console.warn('cloud',e); }
+  cloud.ready=true;
+  if(exam&&exam.status==='rendu'&&!exam.sent&&cloud.db&&cloud.uid) await sendResult();
+  if(store.view==='ex') renderExam();
+}
+function syncFromCloud(r){
+  const la=exam?(exam.attempt||1):0;
+  if(r.status==='rendu'&&r.result){
+    if(!exam||exam.status!=='rendu'||la<=(r.attempt||1)){
+      exam={name:r.name||'',classe:r.classe||'',status:'rendu',attempt:r.attempt||1,answers:r.answers||{},startedAt:r.startedAt,finishedAt:r.finishedAt,result:r.result,sent:true};
+    }
+  } else if(r.status==='en cours'){
+    if(!exam) exam={name:r.name||'',classe:r.classe||'',status:'en cours',attempt:r.attempt||1,answers:r.answers||{},startedAt:r.startedAt};
+  } else if(r.status==='autorise'){
+    if(exam&&exam.status==='rendu'&&la<=(r.attempt||1)){ lastName=exam.name; lastClasse=exam.classe||''; exam=null; }
+  }
+  saveExamLocal();
+}
+async function cloudWrite(doc){
+  if(!cloud.db||!cloud.uid) return false;
+  try{ await cloud.db.doc('results/'+cloud.uid).set(doc); cloud.last=doc; return true; }
+  catch(e){ if(e&&e.code==='unavailable'){ await new Promise(r=>setTimeout(r,400+Math.random()*600)); try{ await cloud.db.doc('results/'+cloud.uid).set(doc); cloud.last=doc; return true; }catch(_){ } } console.warn('write',e); return false; }
+}
+async function sendResult(){
+  const payload={name:exam.name,classe:exam.classe||'',attempt:exam.attempt||1,startedAt:exam.startedAt||'',finishedAt:exam.finishedAt||'',answers:exam.answers,result:exam.result,security:exam.security||{count:0,events:[]}};
+  const g=await gasCall('submit',payload);
+  exam.sent=!!(g&&g.ok&&g.saved===true&&Number(g.row)>1);
+  exam.savedRow=exam.sent?Number(g.row):null;
+  if(g&&g.duplicate) exam.sendError='duplicate';
+  saveExamLocal();
+  // On garde aussi l'ancien stockage cloud s'il est disponible.
+  if(cloud.db&&cloud.uid){
+    const doc={...payload,status:'rendu',history:(cloud.last&&cloud.last.history)||[]};
+    try{ await cloudWrite(doc); }catch(e){}
+  }
+}
+
+// ----- Affichage général -----
+function solo(on){ $('#exView').classList.toggle('solo',on); $('#exSide').hidden=on; }
+function renderExam(){
+  if(teacherOpen) return renderTeacher();
+  if(!cloud.ready){ solo(true); $('#exCard').innerHTML='<p>Connexion en cours…</p>'; return; }
+  if(!exam) return renderLanding();
+  if(exam.status==='en cours') return renderTest();
+  return renderResults();
+}
+function teacherButton(){ return cloud.owner&&cloud.db?'<button type="button" class="ghost" id="tOpen">Espace professeur</button>':''; }
+function bindTeacher(){ const b=$('#tOpen'); if(b) b.addEventListener('click',()=>{ teacherOpen=true; autoSheet=true; renderExam(); window.scrollTo({top:0}); }); }
+
+function renderLanding(){
+  solo(true);
+  const online=(!GOOGLE_SCRIPT_URL.includes('COLLER_ICI'))||!!(cloud.db&&cloud.uid);
+  $('#exCard').innerHTML=`<h2 class="exq" style="margin-top:0">Contrôle : le code Arduino</h2>
+  <p class="story">Ce contrôle contient ${NQ} questions sur tout ce que tu as appris dans les missions : les bases, le temps, les conditions, le moniteur série, les boucles, l'analogique, les variables et les organigrammes. Il est noté sur 20 et dure <strong>20 minutes</strong>.</p>
+  <div class="goal"><h3>Règles du contrôle</h3><p>Tu disposes de <strong>20 minutes</strong>. À 00:00, la copie est rendue automatiquement. Tu ne peux le passer qu'une seule fois. Pendant le contrôle, les réponses ne sont pas corrigées. Tu peux revenir sur une question tant que tu n'as pas rendu ta copie. À la fin, tu verras ta note et la correction de chaque question.</p></div>
+  <div class="field"><label for="stName">Nom et prénom</label><input id="stName" autocomplete="name" maxlength="60" value="${esc(lastName)}"></div>
+  <div class="field"><label for="stClass">Classe</label><input id="stClass" maxlength="20" required value="${esc(lastClasse)}"></div>
+  <p class="exerr" id="stErr" role="alert" hidden></p>
+  <div class="exactions"><button type="button" class="run" id="stStart">Commencer le contrôle</button>${teacherButton()}</div>
+  <p class="msg ${online?'info':'warn'}" style="margin-top:16px">${online?'Ta note sera envoyée automatiquement à ton professeur quand tu rendras ta copie.':'Attention : depuis cette page, la note ne peut pas être envoyée au professeur. Ouvre le contrôle avec le lien partagé par ton professeur, en étant connecté à ton compte.'}</p>`;
+  $('#stStart').addEventListener('click',startExam);
+  $('#stName').addEventListener('keydown',ev=>{ if(ev.key==='Enter') startExam(); });
+  bindTeacher();
+}
+async function startExam(){
+  const name=$('#stName').value.trim().replace(/\s+/g,' '), classe=$('#stClass').value.trim();
+  const er=$('#stErr');
+  if(name.length<3||!/\s/.test(name)){ er.textContent='Écris ton nom et ton prénom pour commencer.'; er.hidden=false; $('#stName').focus(); return; }
+  if(!classe){ er.textContent='Indique ta classe pour commencer.'; er.hidden=false; $('#stClass').focus(); return; }
+  $('#stStart').disabled=true; er.hidden=true;
+  // Démarrage local immédiat : Google Sheets ne doit jamais bloquer le contrôle.
+  // Le blocage d'une seconde tentative est déjà assuré par la copie locale rendue ;
+  // le professeur peut la réinitialiser avec son mot de passe.
+  let prevAttempt=0;
+  try{
+    const chk=await Promise.race([
+      gasCall('check',{name,classe}),
+      new Promise(resolve=>setTimeout(()=>resolve(null),1500))
+    ]);
+    if(chk && chk.exists && !chk.authorized){
+      er.textContent='Ce contrôle a déjà été réalisé avec ce nom. Une nouvelle tentative nécessite l’autorisation du professeur.';
+      er.hidden=false; $('#stStart').disabled=false; return;
+    }
+    prevAttempt=chk&&chk.attempt?Number(chk.attempt):0;
+  }catch(e){ console.warn('Vérification distante ignorée',e); }
+  exam={name,classe,status:'en cours',attempt:prevAttempt+1,answers:{},startedAt:new Date().toISOString(),online:true};
+  saveExamLocal();
+  exIdx=0; renderExam(); window.scrollTo({top:0});
+  // Sauvegarde cloud éventuelle en arrière-plan, sans bloquer l'interface.
+  cloudWrite({name,classe,status:'en cours',attempt:exam.attempt,startedAt:exam.startedAt,answers:{},history:(cloud.last&&cloud.last.history)||[]})
+    .then(ok=>{ if(exam&&exam.status==='en cours'){ exam.online=ok||!!GOOGLE_SCRIPT_URL&&!GOOGLE_SCRIPT_URL.includes('COLLER_ICI'); saveExamLocal(); } })
+    .catch(()=>{});
+}
+
+// ----- Pendant le contrôle -----
+function examRemainingMs(){
+  if(!exam||exam.status!=='en cours') return 0;
+  const start=Date.parse(exam.startedAt||'');
+  if(!Number.isFinite(start)) return EXAM_DURATION_MS;
+  return Math.max(0,EXAM_DURATION_MS-(Date.now()-start));
+}
+function timerText(ms){
+  const sec=Math.max(0,Math.ceil(ms/1000));
+  const m=Math.floor(sec/60), ss=sec%60;
+  return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');
+}
+function updateExamTimer(){
+  if(!exam||exam.status!=='en cours'){ if(examTimerHandle){clearInterval(examTimerHandle); examTimerHandle=null;} return; }
+  const ms=examRemainingMs();
+  document.querySelectorAll('[data-exam-timer]').forEach(n=>{
+    n.textContent=timerText(ms);
+    n.classList.toggle('warn',ms>0&&ms<=5*60*1000);
+    n.classList.toggle('danger',ms>0&&ms<=60*1000);
+  });
+  if(ms<=0&&!examFinishing){
+    examFinishing=true;
+    if(examTimerHandle){clearInterval(examTimerHandle); examTimerHandle=null;}
+    finishExam(true).finally(()=>{examFinishing=false;});
+  }
+}
+function startExamTimer(){
+  if(examTimerHandle) clearInterval(examTimerHandle);
+  updateExamTimer();
+  if(exam&&exam.status==='en cours') examTimerHandle=setInterval(updateExamTimer,500);
+}
+function renderSide(){
+  const n=EXERCISES.filter(x=>answered(x,exam.answers[x.id])).length;
+  const side=$('#exSide');
+  side.innerHTML=`<h2>Contrôle</h2><p class="exscore">${esc(exam.name)}${exam.classe?', '+esc(exam.classe):''}</p>
+  <p><span class="exam-timer" data-exam-timer aria-label="Temps restant">20:00</span></p>
+  <div class="exbar" aria-hidden="true"><span style="width:${100*n/NQ}%"></span></div>
+  <p class="exscore" style="margin:-6px 0 12px">${n} réponse${n>1?'s':''} sur ${NQ}</p><nav id="exNav" aria-label="Questions du contrôle"></nav>
+  <button type="button" class="run" id="exFinish" style="width:100%;margin-top:6px">Rendre ma copie</button>`;
+  const nav=$('#exNav');
+  for(const t of [...new Set(EXERCISES.map(e=>e.theme))]){
+    const g=el('div','exgroup'); g.append(el('h3','',t)); const row=el('div','exrow');
+    EXERCISES.forEach((e,i)=>{ if(e.theme!==t) return;
+      const ans=answered(e,exam.answers[e.id]);
+      const b=el('button','exbtn'+(ans?' ans':''),String(i+1)); b.type='button';
+      b.setAttribute('aria-label',`Question ${i+1}${ans?', répondue':', sans réponse'}`);
+      if(i===exIdx) b.setAttribute('aria-current','true');
+      b.addEventListener('click',()=>{ exIdx=i; renderTest(); });
+      row.append(b); });
+    g.append(row); nav.append(g);
+  }
+  $('#exFinish').addEventListener('click',renderConfirm);
+  startExamTimer();
+}
+function setAnswer(e,v){
+  // Verrouillage strict : aucune réponse n'est modifiable après la fin du contrôle.
+  if(!exam || exam.status!=='en cours' || examFinishing) return;
+  exam.answers[e.id]=v; saveExamLocal(); renderSide();
+}
+function renderTest(){
+  solo(false); renderSide();
+  const e=EXERCISES[exIdx], card=$('#exCard'), a=exam.answers[e.id];
+  card.innerHTML=`<p class="exmeta"><span class="extype t-${e.type}">${TYPE_LABEL[e.type]}</span>Question ${exIdx+1} sur ${NQ}, ${esc(e.theme.toLowerCase())}</p>
+  <h2 class="exq">${esc(e.q)}</h2><div id="exBody"></div>
+  ${exam.online===false?'<p class="msg warn" style="margin-top:14px">Ta note ne pourra pas être envoyée automatiquement. À la fin, montre ton écran de résultats au professeur.</p>':''}
+  <div class="exnext"><button type="button" class="ghost" id="exPrev"${exIdx===0?' disabled':''}>Question précédente</button><button type="button" class="${exIdx+1<NQ?'ghost':'run'}" id="exNext">${exIdx+1<NQ?'Question suivante':'Rendre ma copie'}</button></div>`;
+  buildBody(e,$('#exBody'),a,v=>setAnswer(e,v));
+  $('#exPrev').addEventListener('click',()=>{ if(exIdx>0){ exIdx--; renderTest(); window.scrollTo({top:0}); } });
+  $('#exNext').addEventListener('click',()=>{ if(exIdx+1<NQ){ exIdx++; renderTest(); window.scrollTo({top:0}); } else renderConfirm(); });
+}
+function buildBody(e,body,a,onChange){
+  exSel={choice:null,line:null,order:null};
+  if(e.type==='qcm'){
+    if(e.chart) body.append(chartFigure(e));
+    if(e.code) body.append(codeBlock(e.code));
+    const box=el('div','qopts'); box.setAttribute('role','group');
+    e.opts.forEach((o,i)=>{ const b=el('button','qopt',o); b.type='button'; b.setAttribute('aria-pressed',String(a===i));
+      b.addEventListener('click',()=>{ box.querySelectorAll('.qopt').forEach((x,j)=>x.setAttribute('aria-pressed',String(j===i))); onChange(i); });
+      box.append(b); });
+    body.append(box);
+  } else if(e.type==='trous'||e.type==='orga'){
+    const pre=blanksPre(e);
+    const sels=[...pre.querySelectorAll('.blank')];
+    sels.forEach(s=>{ const k=Number(s.dataset.b); if(Array.isArray(a)&&a[k]!=null) s.value=a[k];
+      s.addEventListener(s.tagName==='SELECT'?'change':'input',()=>{ const vals=[]; sels.forEach(x=>vals[Number(x.dataset.b)]=x.value); onChange(vals); }); });
+    if(e.type==='orga'){ const g=el('div','orga'); g.append(chartFigure(e),pre); body.append(g); } else body.append(pre);
+  } else if(e.type==='bug'){
+    const box=el('div','codeview'); box.setAttribute('role','group'); box.setAttribute('aria-label','Lignes du programme');
+    hlLines(e.code).forEach((h,i)=>{ const b=document.createElement('button'); b.type='button'; b.className='cline'+(a===i+1?' sel':''); b.innerHTML=`<span class="num">${i+1}</span>${h||' '}`; b.setAttribute('aria-label',`Ligne ${i+1}`); b.setAttribute('aria-pressed',String(a===i+1));
+      b.addEventListener('click',()=>{ box.querySelectorAll('.cline').forEach((x,j)=>{ x.classList.toggle('sel',j===i); x.setAttribute('aria-pressed',String(j===i)); }); onChange(i+1); });
+      box.append(b); });
+    body.append(box);
+  } else if(e.type==='ordre'){
+    exSel.order=Array.isArray(a)?a.slice():e.start.slice();
+    const wrap=el('div'); body.append(wrap); drawOrder(e,wrap,onChange);
+  } else if(e.type==='sortie'){
+    body.append(codeBlock(e.code));
+    const lab=el('label','anslab',e.multiline?'Ce qu\'affiche le moniteur série (une ligne par ligne) :':'Ta réponse :'); lab.htmlFor='exAns';
+    const inp=e.multiline?el('textarea'):el('input'); inp.id='exAns'; if(e.multiline) inp.rows=3; else { inp.type='text'; inp.autocomplete='off'; }
+    inp.spellcheck=false; if(a!=null) inp.value=a;
+    inp.addEventListener('input',()=>onChange(inp.value));
+    body.append(lab,inp);
+  }
+}
+function drawOrder(e,wrap,onChange){
+  wrap.replaceChildren();
+  const box=el('div','olist'); box.append(el('code','ofix',e.pre));
+  const ol=el('ol'); ol.style.cssText='list-style:none;margin:0;padding:0';
+  exSel.order.forEach((li,pos)=>{
+    const item=el('li'); const c=el('code'); c.innerHTML=highlight(e.lines[li]); item.append(c);
+    const mk=(t,lab,d)=>{ const b=el('button','',t); b.type='button'; b.setAttribute('aria-label',lab); b.disabled=(pos+d<0||pos+d>=exSel.order.length);
+      b.addEventListener('click',()=>{ const o=exSel.order; [o[pos],o[pos+d]]=[o[pos+d],o[pos]]; drawOrder(e,wrap,onChange); onChange(o.slice()); const n=wrap.querySelectorAll('li')[pos+d]; if(n) n.querySelectorAll('button')[d<0?0:1].focus(); }); return b; };
+    item.append(mk('↑',`Monter la ligne ${e.lines[li]}`,-1),mk('↓',`Descendre la ligne ${e.lines[li]}`,1));
+    ol.append(item);
+  });
+  box.append(ol,el('code','ofix',e.post)); wrap.append(box);
+}
+function renderConfirm(){
+  const miss=EXERCISES.map((e,i)=>answered(e,exam.answers[e.id])?null:i+1).filter(Boolean);
+  solo(false); renderSide();
+  $('#exCard').innerHTML=`<h2 class="exq" style="margin-top:0">Rendre ta copie ?</h2>
+  <p class="story">Tu as répondu à ${NQ-miss.length} question${NQ-miss.length>1?'s':''} sur ${NQ}.</p>
+  ${miss.length?`<p class="msg warn" style="margin-top:12px">Questions sans réponse : ${miss.join(', ')}. Elles compteront comme fausses.</p>`:''}
+  <p style="margin-top:12px">Une fois rendue, ta copie ne pourra plus être modifiée.</p>
+  <div class="exactions"><button type="button" class="run" id="cfYes">Rendre ma copie</button><button type="button" class="ghost" id="cfNo">Continuer le contrôle</button></div>`;
+  $('#cfYes').addEventListener('click',finishExam);
+  $('#cfNo').addEventListener('click',()=>{ if(miss.length) exIdx=miss[0]-1; renderTest(); });
+}
+async function finishExam(timedOut=false){
+  if(!exam||exam.status!=='en cours') return;
+  examFinishing=true;
+  if(examTimerHandle){clearInterval(examTimerHandle); examTimerHandle=null;}
+
+  // À 00:00 (ou lors d'un rendu manuel), verrouiller immédiatement toute la copie.
+  document.querySelectorAll('#exView button,#exView input,#exView textarea,#exView select').forEach(el=>el.disabled=true);
+
+  const details=EXERCISES.map(e=>isCorrect(e,exam.answers[e.id])?1:0);
+  const score=details.reduce((s,x)=>s+x,0), note=Math.round(score/NQ*40)/2;
+  exam.status='rendu';
+  exam.finishedAt=new Date().toISOString();
+  exam.timedOut=!!timedOut;
+  exam.result={score,total:NQ,note,details};
+  exam.sent=false;
+  saveExamLocal();
+
+  $('#exCard').innerHTML=timedOut
+    ? '<p class="msg warn"><strong>Temps écoulé — 00:00.</strong> La copie est verrouillée et validée automatiquement.</p><p>Calcul du résultat et envoi automatique de la note au professeur…</p>'
+    : '<p>Copie verrouillée. Calcul du résultat et envoi automatique de la note au professeur…</p>';
+
+  try {
+    await sendResult();
+  } finally {
+    examFinishing=false;
+    renderExam();
+    window.scrollTo({top:0});
+  }
+}
+
+// ----- Résultats et corrections -----
+function cmpBox(left,right){
+  const g=el('div','cmp');
+  const L=el('div'); L.append(el('h4','','Ta réponse'),left);
+  const R=el('div'); R.append(el('h4','','Bonne réponse'),right);
+  g.append(L,R); return g;
+}
+const txtBox=t=>el('div','txt',t);
+function filledPre(e,vals,student){
+  const parts=e.code.split(/\{(\d)\}/); let html='';
+  parts.forEach((p,i)=>{
+    if(i%2===0){ html+=highlight(p); return; }
+    const k=Number(p);
+    const v=student?(Array.isArray(vals)&&vals[k]!=null?String(vals[k]):''):blankAnswer(e,k);
+    const cls=student?(blankOk(e,k,v)?'ok':'ko'):'ok';
+    html+=`<mark class="fill ${cls}">${esc(v.trim()?v:'vide')}</mark>`;
+  });
+  const pre=el('pre','codeview'); pre.innerHTML=html.split('\n').map(h=>`<span class="l">${h||' '}</span>`).join(''); return pre;
+}
+function corrBody(e,a){
+  const box=el('div');
+  switch(e.type){
+    case 'qcm':
+      if(e.chart) box.append(chartFigure(e));
+      if(e.code) box.append(codeBlock(e.code));
+      box.append(cmpBox(txtBox(a==null?'Pas de réponse':e.opts[a]),txtBox(e.opts[e.a]))); break;
+    case 'bug':{
+      const ls=e.code.split('\n'); const marks={[e.a]:'lok'}; if(a&&a!==e.a) marks[a]='lko';
+      box.append(codeBlock(e.code,marks));
+      box.append(cmpBox(txtBox(a?`Ligne ${a} : ${ls[a-1].trim()||'(ligne vide)'}`:'Pas de réponse'),txtBox(`Ligne ${e.a} : ${ls[e.a-1].trim()}`))); break; }
+    case 'trous': case 'orga':
+      if(e.chart) box.append(chartFigure(e));
+      box.append(cmpBox(filledPre(e,a,true),filledPre(e,null,false))); break;
+    case 'ordre':{
+      const ord=Array.isArray(a)?a:e.start;
+      const mk=o=>codeBlock([e.pre,...o.map(i=>'  '+e.lines[i]),e.post].join('\n'));
+      box.append(cmpBox(mk(ord),mk(e.lines.map((_,i)=>i)))); break; }
+    case 'sortie':
+      box.append(codeBlock(e.code));
+      box.append(cmpBox(txtBox(a!=null&&String(a).trim()?String(a):'Pas de réponse'),txtBox(e.a[0]))); break;
+  }
+  return box;
+}
+function renderResults(){
+  solo(true);
+  const r=exam.result, card=$('#exCard');
+  card.innerHTML=`<h2 class="exq" style="margin-top:0">Copie rendue</h2>
+  <p class="story">${esc(exam.name)}${exam.classe?', '+esc(exam.classe):''}. Rendue le ${esc(fmtDate(exam.finishedAt))}${(exam.attempt||1)>1?`, tentative ${exam.attempt}`:''}.</p>
+  <div class="rhead"><div><p class="note">${fmtNote(r.note)} / 20</p><p class="exscore">${r.score} bonne${r.score>1?'s':''} réponse${r.score>1?'s':''} sur ${r.total}</p></div></div>
+  <div id="sendState"></div>
+  <div id="themeSum" class="tsum"></div>
+  <h3 style="margin-top:22px;font-size:19px">Correction question par question</h3>
+  <div id="corrList"></div>
+  <div class="exactions" style="margin-top:22px">
+    <button type="button" class="ghost" id="rPrint">Imprimer la correction</button>
+    <button type="button" class="ghost" id="rRetake">Refaire le contrôle</button>${teacherButton()}
+  </div>
+  <div id="retakeBox" hidden>
+    <div class="field"><label for="tPass">Mot de passe du professeur</label><input id="tPass" type="password" autocomplete="off"></div>
+    <p class="exerr" id="tPassErr" role="alert" hidden></p>
+    <div class="exactions"><button type="button" class="run" id="tPassOk">Valider</button><button type="button" class="ghost" id="tPassCancel">Annuler</button></div>
+  </div>`;
+  const ss=$('#sendState');
+  if(exam.sent) ss.innerHTML=`<p class="msg info">✅ Note réellement enregistrée dans Google Sheets — onglet Notes, ligne ${exam.savedRow}.</p>`;
+  else { ss.innerHTML=`<p class="msg warn">Ta note n'a pas pu être envoyée au professeur. Montre-lui cet écran.${cloud.db&&cloud.uid?' <button type="button" class="ghost small" id="reSend">Réessayer l\'envoi</button>':''}</p>`;
+    const rs=$('#reSend'); if(rs) rs.addEventListener('click',async()=>{ rs.disabled=true; await sendResult(); renderResults(); }); }
+  // résumé par thème
+  const sum=$('#themeSum');
+  for(const t of [...new Set(EXERCISES.map(e=>e.theme))]){
+    const idx=EXERCISES.map((e,i)=>e.theme===t?i:-1).filter(i=>i>=0);
+    const ok=idx.filter(i=>r.details[i]).length;
+    const d=el('div','tchip'+(ok===idx.length?' full':ok===0?' zero':'')); d.innerHTML=`<strong>${esc(t)}</strong><span>${ok} / ${idx.length}</span>`; sum.append(d);
+  }
+  const list=$('#corrList');
+  EXERCISES.forEach((e,i)=>{
+    const a=exam.answers[e.id], ok=!!r.details[i];
+    const art=el('article','corr '+(ok?'ok':'ko'));
+    const h=el('div','ch'); h.innerHTML=`<span class="mk">${ok?'✓ Juste':'✗ Faux'}</span><span>Question ${i+1}</span><span class="extype t-${e.type}">${TYPE_LABEL[e.type]}</span><span>${esc(e.theme)}</span>`;
+    art.append(h,el('p','q',e.q),corrBody(e,a));
+    const ex=el('p','cexp'); ex.innerHTML='<strong>Explication :</strong> '+esc(e.exp); art.append(ex);
+    list.append(art);
+  });
+  $('#rPrint').addEventListener('click',()=>window.print());
+  $('#rRetake').addEventListener('click',()=>{ $('#retakeBox').hidden=false; $('#tPass').focus(); });
+  $('#tPassCancel').addEventListener('click',()=>{ $('#retakeBox').hidden=true; $('#tPass').value=''; });
+  const go=async()=>{ const err=$('#tPassErr'); const res=await tryRetake($('#tPass').value);
+    if(res==='bad'){ err.textContent='Mot de passe incorrect. Seul ton professeur peut autoriser une nouvelle tentative.'; err.hidden=false; $('#tPass').value=''; }
+    else if(res==='unavailable'){ err.textContent='Impossible de vérifier le mot de passe sur cet appareil.'; err.hidden=false; } };
+  $('#tPassOk').addEventListener('click',go);
+  $('#tPass').addEventListener('keydown',ev=>{ if(ev.key==='Enter') go(); });
+  bindTeacher();
+}
+async function sha256(t){ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+async function tryRetake(pw){
+  let h; try{ h=await sha256(String(pw).trim()); }catch(e){ return 'unavailable'; }
+  if(h!==TEACHER_HASH) return 'bad';
+  const prev=exam;
+  // Le mot de passe professeur est validé localement par son hash SHA-256.
+  // La réautorisation ne doit jamais dépendre de Google Sheets / Apps Script.
+  // On informe Apps Script si disponible, mais un échec réseau ne bloque pas le professeur.
+  try{ await gasCall('authorize',{name:prev?prev.name:'',classe:prev?prev.classe||'':'',password:String(pw).trim()}); }catch(e){}
+  const hist=((cloud.last&&cloud.last.history)||[]).slice();
+  if(prev&&prev.result) hist.push({attempt:prev.attempt||1,note:prev.result.note,score:prev.result.score,finishedAt:prev.finishedAt||''});
+  if(cloud.db&&cloud.uid) await cloudWrite({name:prev?prev.name:'',classe:prev?prev.classe||'':'',status:'autorise',attempt:prev?prev.attempt||1:1,history:hist});
+  if(cloud.last) cloud.last.attempt=prev?prev.attempt||1:1;
+  lastName=prev?prev.name:''; lastClasse=prev?prev.classe||'':'';
+  exam=null; saveExamLocal(); renderExam(); window.scrollTo({top:0});
+  return 'ok';
+}
+
+// ----- Google Sheets (via le connecteur du professeur) -----
+const DEFAULT_SHEET='1Y9z0fgbhtxBA3yIgxod9u62n96hQ2b4O_Zd1CCOoqUc';
+const SHEET_KEY='atelier-arduino-sheet', SHEET_LAST='atelier-arduino-sheet-last';
+const GS='Google Sheets';
+function sheetId(){ try{ return localStorage.getItem(SHEET_KEY)||DEFAULT_SHEET; }catch(e){ return DEFAULT_SHEET; } }
+function sheetUrl(){ return 'https://docs.google.com/spreadsheets/d/'+sheetId()+'/edit'; }
+function parseSheetId(s){ s=String(s||'').trim(); const m=s.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]{20,})/); if(m) return m[1]; return /^[a-zA-Z0-9_-]{20,}$/.test(s)?s:null; }
+function mcpMessage(e){
+  switch(e&&e.code){
+    case 'needs_reauth': return 'Ta connexion à Google Sheets a expiré. Reconnecte Google Sheets dans les Paramètres de claude.ai, rubrique Connecteurs, puis clique à nouveau sur Envoyer.';
+    case 'server_not_connected': return 'Google Sheets n\'est pas connecté à ton compte. Ajoute-le dans les Paramètres de claude.ai, rubrique Connecteurs, puis réessaie.';
+    case 'selection_required': return 'Plusieurs connexions Google Sheets existent sur ton compte. Choisis celle à utiliser dans la fenêtre proposée par Claude, puis réessaie.';
+    case 'not_in_manifest': return 'L\'accès à Google Sheets a été refusé pour cette page. Autorise-le dans le menu Autorisations de l\'artifact, puis réessaie.';
+    case 'blocked_by_policy': case 'approval_required': return 'Les règles de ton organisation bloquent l\'envoi vers Google Sheets. Utilise l\'export CSV à la place.';
+    case 'tool_error': return 'Google Sheets a refusé l\'envoi ('+(e.message||'erreur inconnue')+'). Vérifie que le lien de la feuille est correct et que ton compte peut la modifier.';
+    case 'cancelled': return 'Envoi annulé.';
+    case 'not_granted': case 'capability_disabled': case 'capability_removed': return 'La connexion à Google Sheets n\'est pas disponible dans cette vue. Utilise l\'export CSV à la place.';
+    default: return 'Google Sheets ne répond pas pour le moment. Ouvre la feuille pour vérifier si les notes sont arrivées, puis clique à nouveau sur Envoyer.';
+  }
+}
+function sheetRows(){
+  const now=fmtDate(new Date().toISOString());
+  const ST={rendu:'Rendu','en cours':'En cours',autorise:'Nouvelle tentative autorisée'};
+  const rows=[['Élève','Classe','Note sur 20','Réponses justes','Total','Tentative','État','Rendu le','Questions réussies','Questions ratées','Mis à jour le']];
+  for(const r of tRows.slice(0,998)){
+    const res=r.status==='rendu'&&r.result;
+    const okQ=res?r.result.details.map((d,i)=>d?i+1:0).filter(Boolean).join(', '):'';
+    const koQ=res?r.result.details.map((d,i)=>d?0:i+1).filter(Boolean).join(', '):'';
+    rows.push([String(r.name||''),String(r.classe||''),res?r.result.note:'',res?r.result.score:'',res?r.result.total:'',r.attempt||1,ST[r.status]||String(r.status||''),res?fmtDate(r.finishedAt):'',okQ,koQ,now]);
+  }
+  return rows;
+}
+let gsBusy=false;
+async function sendToSheets(){
+  if(gsBusy) return; const st=$('#gsState'), btn=$('#gsSend'); if(!st||!btn) return;
+  gsBusy=true; btn.disabled=true; st.className='msg info'; st.textContent='Envoi vers Google Sheets…';
+  let mcp=null; try{ mcp=await window.claude.use('mcp'); }catch(e){}
+  if(!mcp){ st.className='msg warn'; st.textContent='La connexion à Google Sheets n\'est pas disponible dans cette vue. Utilise l\'export CSV à la place.'; gsBusy=false; btn.disabled=false; return; }
+  const id=sheetId();
+  try{
+    const metaIn={spreadsheetId:id,fields:['properties.title','sheets.properties.sheetId','sheets.properties.title']};
+    let meta;
+    try{ meta=await mcp.callTool(GS,'get_spreadsheet',metaIn); }
+    catch(e){ if(e&&e.retryable){ await new Promise(r=>setTimeout(r,Math.max(e.retryAfterMs||0,700+Math.random()*900))); meta=await mcp.callTool(GS,'get_spreadsheet',metaIn); } else throw e; }
+    const p=(meta&&meta.payload)||{};
+    const tab=(p.sheets&&p.sheets[0]&&p.sheets[0].properties&&p.sheets[0].properties.title)||'Feuille 1';
+    const q="'"+tab.replace(/'/g,"''")+"'";
+    const rows=sheetRows();
+    await mcp.callTool(GS,'batch_clear_values',{spreadsheetId:id,ranges:[q+'!A1:K1000']});
+    const res=await mcp.callTool(GS,'update_values',{spreadsheetId:id,range:q+'!A1:K'+rows.length,values:rows});
+    const pl=(res&&res.payload)||{};
+    const n=rows.length-1, when=fmtDate(new Date().toISOString());
+    const txt=`${n} élève${n>1?'s':''} envoyé${n>1?'s':''} le ${when} dans « ${(p.properties&&p.properties.title||'la feuille').trim()} »${pl.updatedRows?'':' (réponse inattendue de Google Sheets : vérifie la feuille)'}.`;
+    try{ localStorage.setItem(SHEET_LAST,txt); }catch(e){}
+    st.className='msg info'; st.textContent=txt;
+  }catch(e){ console.warn('sheets',e); st.className='msg err'; st.textContent=mcpMessage(e); }
+  gsBusy=false; btn.disabled=false;
+}
+function sheetSection(){
+  let last=''; try{ last=localStorage.getItem(SHEET_LAST)||''; }catch(e){}
+  return `<section class="gsheet">
+  <h3>Google Sheets</h3>
+  <p class="exscore">Les notes sont envoyées dans ta feuille <a href="${esc(sheetUrl())}" target="_blank" rel="noopener">Notes contrôle Arduino</a>, avec ton compte Google. L'envoi se fait à chaque ouverture de l'espace professeur, et quand tu cliques sur le bouton.</p>
+  <div class="exactions"><button type="button" class="run" id="gsSend">Envoyer les notes vers Google Sheets</button></div>
+  <p id="gsState" class="${last?'msg info':''}" role="status">${esc(last)}</p>
+  <details class="gsmore"><summary>Utiliser une autre feuille</summary>
+    <div class="field"><label for="gsUrl">Lien de la feuille Google Sheets</label><input id="gsUrl" placeholder="https://docs.google.com/spreadsheets/d/…" value="${esc(sheetUrl())}"></div>
+    <p class="exerr" id="gsUrlErr" hidden></p>
+    <div class="exactions"><button type="button" class="ghost" id="gsSave">Enregistrer ce lien</button></div>
+  </details></section>`;
+}
+function bindSheet(){
+  $('#gsSend').addEventListener('click',sendToSheets);
+  $('#gsSave').addEventListener('click',()=>{ const id=parseSheetId($('#gsUrl').value); const er=$('#gsUrlErr');
+    if(!id){ er.textContent='Ce lien n\'est pas celui d\'une feuille Google Sheets.'; er.hidden=false; return; }
+    try{ localStorage.setItem(SHEET_KEY,id); localStorage.removeItem(SHEET_LAST); }catch(e){}
+    renderTeacher(); });
+}
+
+// ----- Espace professeur -----
+let tRows=[], autoSheet=false;
+async function renderTeacher(){
+  solo(true);
+  const card=$('#exCard');
+  card.innerHTML=`<h2 class="exq" style="margin-top:0">Espace professeur</h2>
+  <p class="story">Les copies rendues arrivent ici automatiquement. Seul toi, propriétaire de cette page, peux les voir.</p>
+  <div class="exactions"><button type="button" class="ghost" id="tCsv">Exporter en CSV</button><button type="button" class="ghost" id="tRefresh">Actualiser</button><button type="button" class="ghost" id="tBack">Retour</button></div>
+  <div id="tMsg"></div>
+  ${sheetSection()}
+  <h3 style="margin-top:20px;font-size:17px">Copies rendues</h3>
+  <div class="tablewrap" id="tTable" style="margin-top:8px">Chargement…</div>`;
+  $('#tBack').addEventListener('click',()=>{ teacherOpen=false; renderExam(); });
+  $('#tRefresh').addEventListener('click',()=>renderTeacher());
+  $('#tCsv').addEventListener('click',exportCsv);
+  bindSheet();
+  if(!cloud.db||!cloud.owner){ $('#tTable').textContent='L\'espace professeur n\'est disponible que pour le propriétaire de la page publiée.'; return; }
+  try{
+    const snap=await cloud.db.collection('results').limit(1000).get();
+    tRows=snap.docs.map(d=>({id:d.id,...JSON.parse(JSON.stringify(d.data()))})).sort((x,y)=>String(x.classe||'').localeCompare(String(y.classe||''),'fr')||String(x.name||'').localeCompare(String(y.name||''),'fr'));
+  }catch(e){ $('#tTable').textContent='Impossible de lire les résultats pour le moment. Réessaie avec Actualiser.'; return; }
+  if(!tRows.length){ $('#tTable').textContent='Aucune copie pour l\'instant.'; return; }
+  const ST={rendu:'Rendu','en cours':'En cours',autorise:'Nouvelle tentative autorisée'};
+  let html=`<table class="ttable"><thead><tr><th>Élève</th><th>Classe</th><th>Note / 20</th><th>Réponses justes</th><th>Tentative</th><th>État</th><th>Rendu le</th><th>Action</th></tr></thead><tbody>`;
+  tRows.forEach((r,i)=>{
+    const res=r.status==='rendu'&&r.result;
+    const det=res?`<details><summary>Détail</summary><p class="qgrid">${r.result.details.map((d,k)=>`<span class="${d?'qok':'qko'}">Q${k+1} ${d?'✓':'✗'}</span>`).join(' ')}</p></details>`:'';
+    const hist=(r.history||[]).length?`<div class="exscore">Avant : ${(r.history||[]).map(h=>fmtNote(h.note)+'/20').join(', ')}</div>`:'';
+    html+=`<tr><td>${esc(r.name||'?')}${det}</td><td>${esc(r.classe||'')}</td><td><strong>${res?fmtNote(r.result.note):'–'}</strong>${hist}</td><td>${res?r.result.score+' / '+r.result.total:'–'}</td><td>${r.attempt||1}</td><td>${ST[r.status]||esc(r.status||'')}</td><td>${res?esc(fmtDate(r.finishedAt)):''}</td><td>${r.status==='rendu'?`<button type="button" class="ghost small" data-allow="${i}">Autoriser une nouvelle tentative</button>`:''}</td></tr>`;
+  });
+  html+='</tbody></table>';
+  $('#tTable').innerHTML=html;
+  if(autoSheet){ autoSheet=false; sendToSheets(); }
+  $('#tTable').querySelectorAll('[data-allow]').forEach(b=>b.addEventListener('click',async()=>{
+    const r=tRows[Number(b.dataset.allow)]; b.disabled=true;
+    const hist=(r.history||[]).concat(r.result?[{attempt:r.attempt||1,note:r.result.note,score:r.result.score,finishedAt:r.finishedAt||''}]:[]);
+    try{ await cloud.db.doc('results/'+r.id).update({status:'autorise',history:hist}); renderTeacher(); }
+    catch(e){ b.disabled=false; $('#tMsg').innerHTML='<p class="msg err">La modification n\'a pas pu être enregistrée. Réessaie.</p>'; }
+  }));
+}
+function csvCell(v){ const s=String(v==null?'':v); return /[";\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
+async function exportCsv(){
+  if(!tRows.length){ $('#tMsg').innerHTML='<p class="msg warn">Aucune copie à exporter.</p>'; return; }
+  const head=['Élève','Classe','Note sur 20','Réponses justes','Total','Tentative','État','Rendu le',...EXERCISES.map((_,i)=>'Q'+(i+1))];
+  const lines=[head.map(csvCell).join(';')];
+  for(const r of tRows){
+    const res=r.status==='rendu'&&r.result;
+    lines.push([r.name,r.classe,res?fmtNote(r.result.note):'',res?r.result.score:'',res?r.result.total:'',r.attempt||1,r.status,res?fmtDate(r.finishedAt):'',...EXERCISES.map((_,i)=>res?(r.result.details[i]?1:0):'')].map(csvCell).join(';'));
+  }
+  const csv='\ufeff'+lines.join('\n');
+  const fname='notes-controle-arduino-'+new Date().toISOString().slice(0,10)+'.csv';
+  let dl=null; try{ dl=await window.claude.use('downloads'); }catch(e){}
+  if(dl){ try{ await dl.save({filename:fname,data:csv}); $('#tMsg').innerHTML='<p class="msg info">Fichier prêt. Dépose-le dans Google Drive et ouvre-le avec Google Sheets.</p>'; return; }catch(e){ } }
+  $('#tMsg').innerHTML=`<p class="msg warn">Le téléchargement n'est pas disponible ici. Copie ce texte et colle-le dans une feuille Google Sheets (Données, puis Scinder le texte en colonnes, séparateur point-virgule).</p><textarea class="csvbox" readonly rows="8">${esc(csv.slice(1))}</textarea>`;
+}
+
+function setView(v){
+  store.view=v; save();
+  $('#viewM').setAttribute('aria-pressed',String(v==='missions')); $('#viewE').setAttribute('aria-pressed',String(v==='ex'));
+  document.querySelector('.layout').hidden=v!=='missions';
+  $('#exView').hidden=v!=='ex'; $('#strip').hidden=v!=='missions'; $('#progress').hidden=v!=='missions'; document.querySelector('.foot').hidden=v!=='missions';
+  if(v==='ex'){ stopRun(); renderExam(); } else renderStrip();
+}
+$('#viewM').addEventListener('click',()=>setView('missions'));
+$('#viewE').addEventListener('click',()=>setView('ex'));
+initCloud();
+
+loadLevel(Number.isInteger(store.last)?store.last:0);
+setView(store.view==='ex'?'ex':'missions');
+
+/* ===== Protection anti-copie pendant le contrôle =====
+   Protection navigateur : dissuasion + journal local des incidents.
+   Print Screen ne peut pas être bloqué totalement par une page Web. */
+(function(){
+  const blockedCombo = (e) => {
+    const k=(e.key||'').toLowerCase();
+    if((e.ctrlKey||e.metaKey) && ['c','v','x','a','p','s','u','o'].includes(k)) return true;
+    if((e.ctrlKey||e.metaKey) && e.shiftKey && ['i','j','c','k'].includes(k)) return true;
+    if(k==='f12' || k==='printscreen') return true;
+    return false;
+  };
+  const active=()=> !!(exam && exam.status==='en cours' && store.view==='ex');
+  const syncSecurityClass=()=>document.body.classList.toggle('exam-security-active',active());
+  setInterval(syncSecurityClass,500); syncSecurityClass();
+  let lastWarn=0;
+  function warn(msg){
+    const now=Date.now(); if(now-lastWarn<700) return; lastWarn=now;
+    const host=document.querySelector('#exCard');
+    if(!host) return;
+    let b=document.querySelector('#antiCheatWarn');
+    if(!b){ b=document.createElement('p'); b.id='antiCheatWarn'; b.className='msg err'; b.setAttribute('role','alert'); host.prepend(b); }
+    b.textContent='⚠️ Contrôle protégé : '+msg;
+    clearTimeout(window.__acw); window.__acw=setTimeout(()=>{ if(b&&b.parentNode)b.remove(); },3500);
+  }
+  function updateIncidentBadge(){
+    if(!active()) return;
+    const host=document.querySelector('#exCard'); if(!host) return;
+    let b=document.querySelector('#examIncidentBadge');
+    if(!b){
+      b=document.createElement('div'); b.id='examIncidentBadge';
+      b.style.cssText='position:sticky;top:6px;z-index:50;margin:0 0 10px auto;width:max-content;max-width:100%;padding:7px 10px;border:2px solid #b91c1c;border-radius:10px;background:#fff1f2;color:#991b1b;font-weight:800;font-size:13px';
+      host.prepend(b);
+    }
+    const n=(exam.security&&exam.security.count)||0;
+    b.textContent='🔒 Contrôle protégé — sorties/actions interdites détectées : '+n;
+  }
+  function incident(type){
+    if(!active()) return;
+    try{
+      exam.security=exam.security||{count:0,events:[]};
+      exam.security.count++;
+      exam.security.events.push({type,at:new Date().toISOString()});
+      if(exam.security.events.length>50) exam.security.events=exam.security.events.slice(-50);
+      saveExamLocal(); updateIncidentBadge();
+    }catch(_){ }
+  }
+  setInterval(updateIncidentBadge,1000);
+  ['copy','cut','paste'].forEach(type=>document.addEventListener(type,e=>{
+    if(!active()) return; e.preventDefault(); e.stopImmediatePropagation(); try{ if(e.clipboardData) e.clipboardData.setData('text/plain',''); }catch(_){} incident(type); warn('copier/coller est désactivé pendant le contrôle.');
+  },true));
+  document.addEventListener('contextmenu',e=>{
+    if(!active()) return; e.preventDefault(); incident('clic-droit'); warn('le clic droit est désactivé pendant le contrôle.');
+  },true);
+  document.addEventListener('dragstart',e=>{
+    if(!active()) return; e.preventDefault(); incident('glisser'); warn('le glisser-déposer est désactivé pendant le contrôle.');
+  },true);
+  document.addEventListener('selectstart',e=>{
+    if(!active()) return;
+    const tag=(e.target.tagName||'').toLowerCase();
+    if(!['input','textarea','select'].includes(tag)) e.preventDefault();
+  },true);
+  document.addEventListener('keydown',e=>{
+    if(!active()) return;
+    if(blockedCombo(e)){
+      e.preventDefault(); e.stopPropagation();
+      const k=(e.key||'').toLowerCase(); incident('touche-'+k);
+      warn(k==='printscreen'?'capture d’écran détectée. Elle ne peut pas être bloquée totalement par le navigateur.':'ce raccourci clavier est désactivé pendant le contrôle.');
+      if(k==='printscreen' && navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText('Capture désactivée pendant le contrôle.').catch(()=>{}); }
+    }
+  },true);
+  window.addEventListener('beforeprint',()=>{
+    if(!active()) return; incident('impression'); warn('l’impression est désactivée pendant le contrôle.');
+  });
+  document.addEventListener('click',e=>{
+    if(!active()) return;
+    const a=e.target.closest&&e.target.closest('a[href]');
+    if(a){ e.preventDefault(); e.stopImmediatePropagation(); incident('lien'); warn('l’ouverture de liens Internet est désactivée pendant le contrôle.'); }
+  },true);
+  document.addEventListener('auxclick',e=>{
+    if(!active()) return;
+    if(e.button===1){ e.preventDefault(); e.stopImmediatePropagation(); incident('clic-milieu'); warn('l’ouverture d’un nouvel onglet est désactivée pendant le contrôle.'); }
+  },true);
+  document.addEventListener('visibilitychange',()=>{
+    if(!active() || !document.hidden) return;
+    incident('sortie-page');
+  });
+  window.addEventListener('blur',()=>{
+    if(!active()) return; incident('changement-fenetre');
+  });
+  const oldOpen=window.open;
+  window.open=function(){
+    if(active()){ incident('window-open'); warn('l’ouverture d’une autre fenêtre est désactivée pendant le contrôle.'); return null; }
+    return oldOpen.apply(window,arguments);
+  };
+})();
+
+</script>
+</body>
+</html>
